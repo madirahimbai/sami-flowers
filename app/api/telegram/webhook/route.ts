@@ -59,17 +59,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const priceMatch = caption.match(/\d[\d\s]{2,}/);
-  if (!priceMatch) {
+  // Prefer an explicit "цена ..." / "цена: ..." marker so a name that
+  // itself contains a number (e.g. "Букет 9900") doesn't get mistaken for
+  // the price. Falls back to the LAST number in the caption — a price
+  // written at the end ("Пионы 25000") is a more common pattern than a
+  // leading one once a name can also carry digits.
+  const numbers = [...caption.matchAll(/\d[\d\s]{2,}\d|\d{3,}/g)];
+  const labeledMatch = caption.match(/цена\s*[:\-]?\s*(\d[\d\s]*\d|\d+)/i);
+  const priceRaw = labeledMatch?.[1] ?? numbers[numbers.length - 1]?.[0];
+  if (!priceRaw) {
     await sendTelegramMessage(
       token,
       chatId,
-      'Не нашёл цену в подписи к фото. Пришлите ещё раз с подписью вида «15000 Букет с пионами».'
+      'Не нашёл цену в подписи к фото. Пришлите ещё раз с подписью вида «15000 Букет с пионами» или «Букет с пионами, цена 15000».'
     );
     return NextResponse.json({ ok: true });
   }
-  const price = parseInt(priceMatch[0].replace(/\s/g, ''), 10);
-  const name = caption.replace(priceMatch[0], '').trim() || `Букет ${new Date().toLocaleDateString('ru-RU')}`;
+  const price = parseInt(priceRaw.replace(/\s/g, ''), 10);
+  const name =
+    caption
+      .replace(labeledMatch?.[0] ?? priceRaw, '')
+      .replace(/цена\s*[:\-]?\s*$/i, '')
+      .replace(/[,\-–]\s*$/, '')
+      .trim() || `Букет ${new Date().toLocaleDateString('ru-RU')}`;
 
   // Telegram sends several resolutions per photo, smallest first — the
   // second-largest is plenty for the site and keeps the stored row small.
