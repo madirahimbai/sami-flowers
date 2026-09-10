@@ -34,6 +34,11 @@ function pool(): Pool {
     global.__samiPgPool = new Pool({
       connectionString,
       ssl: connectionString.includes('sslmode=disable') ? false : { rejectUnauthorized: false },
+      // node-postgres defaults to 10 — bumped for headroom under concurrent
+      // storefront traffic (each page load is 1-2 short queries, not
+      // long-held connections, so this stays well within what a small
+      // managed Postgres instance comfortably serves).
+      max: 20,
     });
   }
   return global.__samiPgPool;
@@ -73,7 +78,24 @@ export function ensureSchema(): Promise<void> {
   return schemaReady;
 }
 
+// Storefront listings (catalog grid, related bouquets, addon/included-item
+// rows) only ever render the single cover `image` — never the full gallery.
+// Pulling `images` (up to 5 base64 photos per row) on every listing query
+// multiplies bytes read from Postgres and sent over the wire for nothing,
+// which matters once real concurrent traffic hits the catalog page.
+const LIST_COLUMNS = 'id, name, number, price, description, image, category, tag, available, sort_order, order_count';
+
 export async function listProducts(category?: 'bouquet' | 'gift' | 'addon' | 'included'): Promise<Product[]> {
+  await ensureSchema();
+  const result = category
+    ? await pool().query<Product>(`SELECT ${LIST_COLUMNS} FROM products WHERE category = $1 ORDER BY price ASC, created_at ASC`, [category])
+    : await pool().query<Product>(`SELECT ${LIST_COLUMNS} FROM products ORDER BY price ASC, created_at ASC`);
+  return result.rows.map((r) => ({ ...r, images: [] }));
+}
+
+/** Same as listProducts but includes the full `images` gallery array — for
+ * the admin dashboard, which needs every photo to manage them. */
+export async function listProductsFull(category?: 'bouquet' | 'gift' | 'addon' | 'included'): Promise<Product[]> {
   await ensureSchema();
   const result = category
     ? await pool().query<Product>('SELECT * FROM products WHERE category = $1 ORDER BY price ASC, created_at ASC', [category])
