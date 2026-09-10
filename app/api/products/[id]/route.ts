@@ -24,6 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     price: body.price !== undefined ? Math.round(body.price) : existing.price,
     description: body.description !== undefined ? body.description : existing.description,
     image: body.image !== undefined ? body.image : existing.image,
+    images: Array.isArray(body.images) ? body.images.slice(0, 5).map(String) : existing.images,
     category: body.category ?? existing.category,
     tag: body.tag !== undefined ? body.tag : existing.tag,
     available: body.available !== undefined ? body.available : existing.available,
