@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { readFile } from 'fs/promises';
+import path from 'path';
 import { upsertProduct, countProducts } from '@/lib/db';
 import seedProducts from '@/data/seed-products.json';
 
@@ -20,9 +22,13 @@ type SeedProduct = {
 /**
  * One-time setup: populates the database with the shop's starting catalog
  * (real bouquets from the spreadsheet import, plus the gift items),
- * reading each photo from /public/seed-images and storing it as a data:
- * URI directly on the row. Protected by SEED_SECRET so it can't be
- * triggered by a stranger — call it once after deploying, then forget
+ * reading each photo straight off disk (public/seed-images, bundled with
+ * the deployment) and storing it as a data: URI on the row. Deliberately
+ * NOT an HTTP self-fetch to the app's own public URL — several hosts
+ * (Railway included) don't route a container's outbound request back to
+ * its own public domain, so that pattern fails silently in production
+ * even though the same path works fine when a browser requests it.
+ * Protected by SEED_SECRET — call it once after deploying, then forget
  * about it (re-running is safe: it just overwrites the same rows).
  *
  * Usage: POST /api/admin/seed  with header  x-seed-secret: <SEED_SECRET>
@@ -34,7 +40,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'not_authorized' }, { status: 401 });
   }
 
-  const origin = req.nextUrl.origin;
   const products = seedProducts as SeedProduct[];
   let created = 0;
   const errors: string[] = [];
@@ -44,9 +49,8 @@ export async function POST(req: NextRequest) {
     let imageDataUri: string | null = null;
     if (p.image) {
       try {
-        const res = await fetch(origin + p.image);
-        if (!res.ok) throw new Error(`fetch ${p.image} failed: ${res.status}`);
-        const buf = Buffer.from(await res.arrayBuffer());
+        const filePath = path.join(process.cwd(), 'public', p.image.replace(/^\//, ''));
+        const buf = await readFile(filePath);
         imageDataUri = `data:image/jpeg;base64,${buf.toString('base64')}`;
       } catch (e: any) {
         errors.push(`${p.id}: ${e.message || e}`);
