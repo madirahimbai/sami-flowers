@@ -7,7 +7,8 @@ export type Product = {
   price: number;
   description: string | null;
   image: string | null; // data: URI (base64) — stored directly in the row
-  category: 'bouquet' | 'gift';
+  images: string[]; // up to 5 data: URIs — first one mirrors `image` as the cover photo
+  category: 'bouquet' | 'gift' | 'addon';
   tag: string | null;
   available: boolean;
   sort_order: number;
@@ -58,12 +59,17 @@ export function ensureSchema(): Promise<void> {
           created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )
       `)
+      .then(() =>
+        // Added after the initial launch — a one-time metadata backfill for
+        // existing rows, no data migration needed since Postgres 11+.
+        pool().query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB NOT NULL DEFAULT '[]'::jsonb`)
+      )
       .then(() => undefined);
   }
   return schemaReady;
 }
 
-export async function listProducts(category?: 'bouquet' | 'gift'): Promise<Product[]> {
+export async function listProducts(category?: 'bouquet' | 'gift' | 'addon'): Promise<Product[]> {
   await ensureSchema();
   const result = category
     ? await pool().query<Product>('SELECT * FROM products WHERE category = $1 ORDER BY sort_order ASC, created_at ASC', [category])
@@ -84,26 +90,32 @@ export async function upsertProduct(p: {
   price: number;
   description: string | null;
   image: string | null;
-  category: 'bouquet' | 'gift';
+  images?: string[] | null;
+  category: 'bouquet' | 'gift' | 'addon';
   tag: string | null;
   available: boolean;
   sort_order?: number;
 }): Promise<Product> {
   await ensureSchema();
+  // `undefined` (the seed script's case) means "leave photos alone" — only an
+  // explicitly-passed array (even []) overwrites, so re-running the seed
+  // can't wipe out photos an admin has since uploaded through the dashboard.
+  const hasImages = p.images !== undefined && p.images !== null;
   const result = await pool().query<Product>(
-    `INSERT INTO products (id, name, number, price, description, image, category, tag, available, sort_order)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `INSERT INTO products (id, name, number, price, description, image, images, category, tag, available, sort_order)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      ON CONFLICT (id) DO UPDATE SET
        name = EXCLUDED.name,
        number = EXCLUDED.number,
        price = EXCLUDED.price,
        description = EXCLUDED.description,
        image = COALESCE(EXCLUDED.image, products.image),
+       images = ${hasImages ? 'EXCLUDED.images' : 'products.images'},
        category = EXCLUDED.category,
        tag = EXCLUDED.tag,
        available = EXCLUDED.available
      RETURNING *`,
-    [p.id, p.name, p.number, p.price, p.description, p.image, p.category, p.tag, p.available, p.sort_order ?? 0]
+    [p.id, p.name, p.number, p.price, p.description, p.image, JSON.stringify(p.images ?? []), p.category, p.tag, p.available, p.sort_order ?? 0]
   );
   return result.rows[0];
 }
