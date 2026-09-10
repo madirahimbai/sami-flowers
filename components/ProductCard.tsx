@@ -6,9 +6,10 @@ import { Product, formatPrice } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
 
 const SIZE_CHIPS = [
-  { label: 'S', mult: 0.7 },
-  { label: 'M', mult: 1 },
-  { label: 'L', mult: 1.5 },
+  { label: 'Стандарт', mult: 1 },
+  { label: '1.5х', mult: 1.5 },
+  { label: '2х', mult: 2 },
+  { label: '3х', mult: 3 },
 ];
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -22,7 +23,7 @@ export default function ProductCard({ product }: { product: Product }) {
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    const sizeLabel = isBouquet ? SIZE_CHIPS.find((c) => c.mult === mult)?.label ?? 'M' : 'Стандарт';
+    const sizeLabel = isBouquet ? SIZE_CHIPS.find((c) => c.mult === mult)?.label ?? 'Стандарт' : 'Стандарт';
     addToCart({ id: product.id, name: product.name, price: displayPrice, sizeLabel, qty: 1 });
     setAdded(true);
     setTimeout(() => setAdded(false), 700);
