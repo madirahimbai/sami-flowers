@@ -20,10 +20,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'missing_bot_token' }, { status: 500 });
   }
 
-  const webhookUrl = `${req.nextUrl.origin}/api/telegram/webhook`;
+  // req.nextUrl.origin can reflect Railway's internal proxy port, which
+  // Telegram rejects (it only accepts 80/88/443/8443) — RAILWAY_PUBLIC_DOMAIN
+  // is the actual public hostname Railway sets on every deploy.
+  const host = process.env.RAILWAY_PUBLIC_DOMAIN || req.nextUrl.host;
+  const webhookUrl = `https://${host}/api/telegram/webhook`;
   const res = await fetch(
     `https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(webhookUrl)}&secret_token=${expected}`
   );
   const data = await res.json();
-  return NextResponse.json(data);
+  return NextResponse.json({ ...data, webhookUrl });
 }
