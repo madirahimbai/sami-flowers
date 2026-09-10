@@ -8,7 +8,7 @@ export type Product = {
   description: string | null;
   image: string | null; // data: URI (base64) — stored directly in the row
   images: string[]; // up to 5 data: URIs — first one mirrors `image` as the cover photo
-  category: 'bouquet' | 'gift' | 'addon';
+  category: 'bouquet' | 'gift' | 'addon' | 'included';
   tag: string | null;
   available: boolean;
   sort_order: number;
@@ -69,7 +69,7 @@ export function ensureSchema(): Promise<void> {
   return schemaReady;
 }
 
-export async function listProducts(category?: 'bouquet' | 'gift' | 'addon'): Promise<Product[]> {
+export async function listProducts(category?: 'bouquet' | 'gift' | 'addon' | 'included'): Promise<Product[]> {
   await ensureSchema();
   const result = category
     ? await pool().query<Product>('SELECT * FROM products WHERE category = $1 ORDER BY sort_order ASC, created_at ASC', [category])
@@ -91,7 +91,7 @@ export async function upsertProduct(p: {
   description: string | null;
   image: string | null;
   images?: string[] | null;
-  category: 'bouquet' | 'gift' | 'addon';
+  category: 'bouquet' | 'gift' | 'addon' | 'included';
   tag: string | null;
   available: boolean;
   sort_order?: number;
