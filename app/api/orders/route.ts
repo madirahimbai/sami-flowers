@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { notifyTelegram } from '@/lib/telegram';
 
-type OrderItem = { name: string; sizeLabel: string; qty: number; price: number };
+type OrderItem = { name: string; sizeLabel: string; qty: number; price: number; image?: string | null };
 
 function formatPrice(n: number): string {
   return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' тнг';
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     if (body.deliveryDate) lines.push(`Дата: ${body.deliveryDate}`);
     if (body.deliveryTime) lines.push(`Время: ${body.deliveryTime}`);
   } else {
-    lines.push('Способ получения: самовывоз — Торайгырова, 73, 1 этаж');
+    lines.push(`Способ получения: самовывоз — ${body.pickupAddress || 'Торайгырова, 73, 1 этаж'}`);
     if (body.deliveryDate) lines.push(`Дата: ${body.deliveryDate}`);
     if (body.deliveryTime) lines.push(`Время: ${body.deliveryTime}`);
   }
@@ -40,7 +40,8 @@ export async function POST(req: NextRequest) {
   if (body.comment) lines.push(`Комментарий: ${body.comment}`);
 
   const text = lines.join('\n');
-  await notifyTelegram(text);
+  const photo = items.find((i) => i.image)?.image ?? null;
+  await notifyTelegram(text, photo);
 
   return NextResponse.json({ ok: true, message: text });
 }
