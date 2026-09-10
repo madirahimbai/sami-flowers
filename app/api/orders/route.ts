@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { notifyTelegram } from '@/lib/telegram';
+import { incrementOrderCounts } from '@/lib/db';
 
-type OrderItem = { name: string; sizeLabel: string; qty: number; price: number; image?: string | null };
+type OrderItem = { id: string; name: string; sizeLabel: string; qty: number; price: number; image?: string | null };
 
 function formatPrice(n: number): string {
   return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' тнг';
@@ -46,6 +47,7 @@ export async function POST(req: NextRequest) {
   const text = lines.join('\n');
   const photo = items.find((i) => i.image)?.image ?? null;
   await notifyTelegram(text, photo);
+  await incrementOrderCounts(items.map((i) => ({ id: i.id, qty: i.qty })));
 
   return NextResponse.json({ ok: true, message: text });
 }
