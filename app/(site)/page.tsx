@@ -8,7 +8,9 @@ export default async function HomePage() {
 
   return (
     <main id="top">
-      <section className="hero wrap">
+      <CatalogClient products={products} />
+
+      <section className="hero wrap" style={{ paddingTop: 20 }}>
         <div className="hero-grid" style={{ gridTemplateColumns: '1fr' }}>
           <div className="hero-copy">
             <span className="eyebrow">Доставка цветов · Павлодар</span>
@@ -18,11 +20,8 @@ export default async function HomePage() {
               присылаем фото букета, чтобы вы видели именно то, что получит адресат.
             </p>
             <div className="hero-actions">
-              <a className="btn btn-primary" href="#catalog">
-                Смотреть каталог
-              </a>
               <a
-                className="btn btn-ghost"
+                className="btn btn-primary"
                 href="https://wa.me/77761115319?text=Здравствуйте!%20Хочу%20заказать%20букет"
                 target="_blank"
                 rel="noreferrer"
@@ -33,8 +32,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      <CatalogClient products={products} />
     </main>
   );
 }
