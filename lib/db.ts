@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { Pool } from 'pg';
 
 export type Product = {
   id: string;
@@ -6,33 +6,59 @@ export type Product = {
   number: number | null;
   price: number;
   description: string | null;
-  image: string | null;
+  image: string | null; // data: URI (base64) — stored directly in the row
   category: 'bouquet' | 'gift';
   tag: string | null;
   available: boolean;
   sort_order: number;
 };
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __samiPgPool: Pool | undefined;
+}
+
+function pool(): Pool {
+  if (!global.__samiPgPool) {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) throw new Error('DATABASE_URL is not set');
+    // Railway's managed Postgres presents a cert chain that Node's default
+    // CA store doesn't recognize; rejectUnauthorized:false is Railway's own
+    // documented workaround for `pg` connections (the DB is only reachable
+    // over Railway's private network, not the public internet, so this
+    // isn't exposed to a public-MITM scenario the way it would be for an
+    // internet-facing endpoint). Set sslmode=disable in DATABASE_URL for a
+    // provider that terminates TLS differently.
+    global.__samiPgPool = new Pool({
+      connectionString,
+      ssl: connectionString.includes('sslmode=disable') ? false : { rejectUnauthorized: false },
+    });
+  }
+  return global.__samiPgPool;
+}
+
 let schemaReady: Promise<void> | null = null;
 
 /** Creates the products table on first use. Safe to call repeatedly. */
 export function ensureSchema(): Promise<void> {
   if (!schemaReady) {
-    schemaReady = sql`
-      CREATE TABLE IF NOT EXISTS products (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        number INTEGER,
-        price INTEGER NOT NULL,
-        description TEXT,
-        image TEXT,
-        category TEXT NOT NULL DEFAULT 'bouquet',
-        tag TEXT,
-        available BOOLEAN NOT NULL DEFAULT true,
-        sort_order INTEGER NOT NULL DEFAULT 0,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-      )
-    `.then(() => undefined);
+    schemaReady = pool()
+      .query(`
+        CREATE TABLE IF NOT EXISTS products (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          number INTEGER,
+          price INTEGER NOT NULL,
+          description TEXT,
+          image TEXT,
+          category TEXT NOT NULL DEFAULT 'bouquet',
+          tag TEXT,
+          available BOOLEAN NOT NULL DEFAULT true,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+      `)
+      .then(() => undefined);
   }
   return schemaReady;
 }
@@ -40,14 +66,14 @@ export function ensureSchema(): Promise<void> {
 export async function listProducts(category?: 'bouquet' | 'gift'): Promise<Product[]> {
   await ensureSchema();
   const result = category
-    ? await sql<Product>`SELECT * FROM products WHERE category = ${category} ORDER BY sort_order ASC, created_at ASC`
-    : await sql<Product>`SELECT * FROM products ORDER BY sort_order ASC, created_at ASC`;
+    ? await pool().query<Product>('SELECT * FROM products WHERE category = $1 ORDER BY sort_order ASC, created_at ASC', [category])
+    : await pool().query<Product>('SELECT * FROM products ORDER BY sort_order ASC, created_at ASC');
   return result.rows;
 }
 
 export async function getProduct(id: string): Promise<Product | null> {
   await ensureSchema();
-  const result = await sql<Product>`SELECT * FROM products WHERE id = ${id} LIMIT 1`;
+  const result = await pool().query<Product>('SELECT * FROM products WHERE id = $1 LIMIT 1', [id]);
   return result.rows[0] ?? null;
 }
 
@@ -64,30 +90,31 @@ export async function upsertProduct(p: {
   sort_order?: number;
 }): Promise<Product> {
   await ensureSchema();
-  const result = await sql<Product>`
-    INSERT INTO products (id, name, number, price, description, image, category, tag, available, sort_order)
-    VALUES (${p.id}, ${p.name}, ${p.number}, ${p.price}, ${p.description}, ${p.image}, ${p.category}, ${p.tag}, ${p.available}, ${p.sort_order ?? 0})
-    ON CONFLICT (id) DO UPDATE SET
-      name = EXCLUDED.name,
-      number = EXCLUDED.number,
-      price = EXCLUDED.price,
-      description = EXCLUDED.description,
-      image = COALESCE(EXCLUDED.image, products.image),
-      category = EXCLUDED.category,
-      tag = EXCLUDED.tag,
-      available = EXCLUDED.available
-    RETURNING *
-  `;
+  const result = await pool().query<Product>(
+    `INSERT INTO products (id, name, number, price, description, image, category, tag, available, sort_order)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     ON CONFLICT (id) DO UPDATE SET
+       name = EXCLUDED.name,
+       number = EXCLUDED.number,
+       price = EXCLUDED.price,
+       description = EXCLUDED.description,
+       image = COALESCE(EXCLUDED.image, products.image),
+       category = EXCLUDED.category,
+       tag = EXCLUDED.tag,
+       available = EXCLUDED.available
+     RETURNING *`,
+    [p.id, p.name, p.number, p.price, p.description, p.image, p.category, p.tag, p.available, p.sort_order ?? 0]
+  );
   return result.rows[0];
 }
 
 export async function deleteProduct(id: string): Promise<void> {
   await ensureSchema();
-  await sql`DELETE FROM products WHERE id = ${id}`;
+  await pool().query('DELETE FROM products WHERE id = $1', [id]);
 }
 
 export async function countProducts(): Promise<number> {
   await ensureSchema();
-  const result = await sql<{ count: string }>`SELECT COUNT(*)::text as count FROM products`;
+  const result = await pool().query<{ count: string }>('SELECT COUNT(*)::text as count FROM products');
   return parseInt(result.rows[0]?.count ?? '0', 10);
 }
