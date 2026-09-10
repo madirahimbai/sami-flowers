@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   if (!expected || provided !== expected) {
     return NextResponse.json({ error: 'not_authorized' }, { status: 401 });
   }
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = process.env.TELEGRAM_PRODUCTS_BOT_TOKEN;
   if (!token) {
     return NextResponse.json({ error: 'missing_bot_token' }, { status: 500 });
   }
