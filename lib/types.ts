@@ -17,6 +17,7 @@ export type CartItem = {
   price: number;
   sizeLabel: string;
   qty: number;
+  image?: string | null;
 };
 
 export function formatPrice(n: number): string {
