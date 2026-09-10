@@ -6,7 +6,7 @@ export type Product = {
   description: string | null;
   image: string | null;
   images: string[];
-  category: 'bouquet' | 'gift' | 'addon';
+  category: 'bouquet' | 'gift' | 'addon' | 'included';
   tag: string | null;
   available: boolean;
 };
