@@ -45,9 +45,10 @@ export async function notifyTelegram(text: string, photoDataUri?: string | null)
 }
 
 /** Plain text reply — used by the webhook to confirm/explain, not tied to
- * the order-notification formatting above. */
-export async function sendTelegramMessage(chatId: string, text: string): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+ * the order-notification formatting above. Takes an explicit token because
+ * the product-adding bot is a separate Telegram bot from the order-notify
+ * one, so nothing mixes in one chat. */
+export async function sendTelegramMessage(token: string, chatId: string, text: string): Promise<void> {
   if (!token) return;
   try {
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -63,8 +64,7 @@ export async function sendTelegramMessage(chatId: string, text: string): Promise
 /** Downloads a photo the shop owner sent to the bot and returns it as a
  * data: URI, ready to store on a product row the same way admin-panel
  * uploads are. */
-export async function downloadTelegramPhoto(fileId: string): Promise<string | null> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+export async function downloadTelegramPhoto(token: string, fileId: string): Promise<string | null> {
   if (!token) return null;
   try {
     const fileRes = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
