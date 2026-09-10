@@ -24,7 +24,7 @@ export default function ProductCard({ product }: { product: Product }) {
     e.preventDefault();
     e.stopPropagation();
     const sizeLabel = isBouquet ? SIZE_CHIPS.find((c) => c.mult === mult)?.label ?? 'Стандарт' : 'Стандарт';
-    addToCart({ id: product.id, name: product.name, price: displayPrice, sizeLabel, qty: 1 });
+    addToCart({ id: product.id, name: product.name, price: displayPrice, sizeLabel, qty: 1, image: product.image });
     setAdded(true);
     setTimeout(() => setAdded(false), 700);
   }
