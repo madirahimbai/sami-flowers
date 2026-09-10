@@ -34,7 +34,7 @@ const ADVANTAGES = [
     icon2: <circle cx="12" cy="13" r="4" />,
   },
   {
-    label: 'Доставка от 90 минут по Павлодару',
+    label: 'Доставка в течение 60 минут по Павлодару',
     icon: <circle cx="12" cy="12" r="9" />,
     icon2: <path d="M12 7v5l3.5 3.5" />,
   },
@@ -144,10 +144,11 @@ export default function ProductPageClient({
       price: unitPrice,
       sizeLabel: `${sizeLabel} · ${flowerColor} · упаковка ${wrapColor}`,
       qty,
+      image: images[0] ?? product.image,
     });
     for (const a of addons) {
       if (selectedAddons.has(a.id)) {
-        addToCart({ id: a.id, name: a.name, price: a.price, sizeLabel: 'Доп. товар', qty: 1 });
+        addToCart({ id: a.id, name: a.name, price: a.price, sizeLabel: 'Доп. товар', qty: 1, image: a.image });
       }
     }
     openCart();
@@ -234,7 +235,7 @@ export default function ProductPageClient({
               <svg className="icon" viewBox="0 0 24 24">
                 <path d="M20 6L9 17l-5-5" />
               </svg>
-              В наличии сейчас · доставка от 90 минут по Павлодару
+              В наличии сейчас · доставка в течение 60 минут по Павлодару
             </div>
 
             <div className="pp-advantages">
@@ -383,8 +384,8 @@ export default function ProductPageClient({
               <details className="pp-acc">
                 <summary>Доставка и самовывоз</summary>
                 <div>
-                  Доставка по Павлодару — от 90 минут, ежедневно с 08:00 до 24:00. Самовывоз — Торайгырова, 73, 1
-                  этаж, в те же часы. Точное время подтвердим в переписке после заказа.
+                  Доставка по Павлодару — в течение 60 минут, ежедневно с 08:00 до 24:00. Самовывоз — Торайгырова, 73,
+                  1 этаж или Амангельды, 23, в те же часы. Точное время подтвердим в переписке после заказа.
                 </div>
               </details>
               <details className="pp-acc">
