@@ -50,9 +50,12 @@ const ADVANTAGES = [
   },
 ];
 
-const INCLUDED_ITEMS = [
+/** Shown only until the admin uploads real photos for the "included" items
+ * (Admin → В комплекте) — generic line icons as a placeholder so the
+ * section is never empty on a fresh install. */
+const FALLBACK_INCLUDED_ITEMS = [
   {
-    label: 'Открытка в подарок',
+    label: 'Бесплатная открытка',
     icon: (
       <>
         <rect x="3" y="6" width="18" height="12" rx="2" />
@@ -61,7 +64,7 @@ const INCLUDED_ITEMS = [
     ),
   },
   {
-    label: 'Инструкция по уходу',
+    label: 'Инструкция к букету',
     icon: (
       <>
         <path d="M6 3h12v18H6z" />
@@ -78,20 +81,11 @@ const INCLUDED_ITEMS = [
     ),
   },
   {
-    label: 'Фирменная упаковка',
+    label: 'Упаковка и аквабокс',
     icon: (
       <>
         <path d="M3 8l9-5 9 5-9 5-9-5z" />
         <path d="M3 8v8l9 5 9-5V8M12 13v8" />
-      </>
-    ),
-  },
-  {
-    label: 'Аквабокс для перевозки',
-    icon: (
-      <>
-        <rect x="3" y="7" width="18" height="13" rx="2" />
-        <path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M3 12h18" />
       </>
     ),
   },
@@ -101,10 +95,12 @@ export default function ProductPageClient({
   product,
   related,
   addons,
+  included,
 }: {
   product: Product;
   related: Product[];
   addons: Product[];
+  included: Product[];
 }) {
   const { addToCart, openCart } = useCart();
   const [mult, setMult] = useState(1);
@@ -283,19 +279,59 @@ export default function ProductPageClient({
 
             <div className="pp-section">
               <h4>К этому букету вы обязательно получите</h4>
-              <div className="pp-included">
-                {INCLUDED_ITEMS.map((it, i) => (
-                  <div key={i} className="pp-included-item">
-                    <span className="icon-wrap">
-                      <svg className="icon" viewBox="0 0 24 24">
-                        {it.icon}
-                      </svg>
-                    </span>
-                    <span>{it.label}</span>
-                  </div>
-                ))}
+              <div className="pp-bento">
+                {included.length > 0
+                  ? included.map((it) => (
+                      <div key={it.id} className="pp-bento-photo">
+                        {it.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={it.image} alt="" />
+                        ) : (
+                          <span className="pp-bento-photo-empty" />
+                        )}
+                        <span>{it.name}</span>
+                      </div>
+                    ))
+                  : FALLBACK_INCLUDED_ITEMS.map((it, i) => (
+                      <div key={i} className="pp-bento-photo">
+                        <span className="pp-bento-photo-empty pp-bento-icon">
+                          <svg className="icon" viewBox="0 0 24 24">
+                            {it.icon}
+                          </svg>
+                        </span>
+                        <span>{it.label}</span>
+                      </div>
+                    ))}
               </div>
             </div>
+
+            {addons.length > 0 && (
+              <div className="pp-section">
+                <h4>Украсьте ваш букет</h4>
+                <div className="pp-bento">
+                  {addons.map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      className={`pp-addon-card ${selectedAddons.has(a.id) ? 'is-active' : ''}`}
+                      onClick={() => toggleAddon(a.id)}
+                    >
+                      <span className="pp-addon-check">✓</span>
+                      {a.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img className="pp-addon-img" src={a.image} alt="" />
+                      ) : (
+                        <span className="pp-addon-img" />
+                      )}
+                      <span className="pp-addon-body">
+                        <span className="pp-addon-name">{a.name}</span>
+                        <span className="pp-addon-price">+{formatPrice(a.price)}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="pp-section">
               <h4>
@@ -334,32 +370,6 @@ export default function ProductPageClient({
                 ))}
               </div>
             </div>
-
-            {addons.length > 0 && (
-              <div className="pp-section">
-                <h4>Украсьте ваш букет</h4>
-                <div className="pp-addons-row">
-                  {addons.map((a) => (
-                    <button
-                      key={a.id}
-                      type="button"
-                      className={`pp-addon-card ${selectedAddons.has(a.id) ? 'is-active' : ''}`}
-                      onClick={() => toggleAddon(a.id)}
-                    >
-                      <span className="pp-addon-check">✓</span>
-                      {a.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img className="pp-addon-img" src={a.image} alt="" />
-                      ) : (
-                        <span className="pp-addon-img" />
-                      )}
-                      <span className="pp-addon-name">{a.name}</span>
-                      <span className="pp-addon-price">+{formatPrice(a.price)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             <div className="pp-qty-row">
               <span className="field-label" style={{ margin: 0 }}>
