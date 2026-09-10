@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
     price: Math.round(body.price),
     description: body.description ?? null,
     image: body.image ?? null,
-    category: body.category === 'gift' ? 'gift' : 'bouquet',
+    images: Array.isArray(body.images) ? body.images.slice(0, 5).map(String) : [],
+    category: body.category === 'gift' ? 'gift' : body.category === 'addon' ? 'addon' : 'bouquet',
     tag: body.tag ?? null,
     available: body.available !== false,
   });
