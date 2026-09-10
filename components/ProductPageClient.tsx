@@ -27,18 +27,114 @@ const WRAP_COLORS = [
   { name: 'Чёрный', hex: '#2b2320' },
 ];
 
-export default function ProductPageClient({ product, related }: { product: Product; related: Product[] }) {
+const ADVANTAGES = [
+  {
+    label: 'Фото букета перед отправкой в WhatsApp',
+    icon: <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />,
+    icon2: <circle cx="12" cy="13" r="4" />,
+  },
+  {
+    label: 'Доставка от 90 минут по Павлодару',
+    icon: <circle cx="12" cy="12" r="9" />,
+    icon2: <path d="M12 7v5l3.5 3.5" />,
+  },
+  {
+    label: 'Свежие цветы, сборка в день заказа',
+    icon: <path d="M12 3c2 3 2 5 0 7-2-2-2-4 0-7z" />,
+    icon2: <path d="M12 10v11M8 15c0 2 2 4 4 4M16 15c0 2-2 4-4 4" />,
+  },
+  {
+    label: 'Оплата при получении или переводом',
+    icon: <rect x="2" y="5" width="20" height="14" rx="3" />,
+    icon2: <path d="M2 10h20" />,
+  },
+];
+
+const INCLUDED_ITEMS = [
+  {
+    label: 'Открытка в подарок',
+    icon: (
+      <>
+        <rect x="3" y="6" width="18" height="12" rx="2" />
+        <path d="M3 8l9 6 9-6" />
+      </>
+    ),
+  },
+  {
+    label: 'Инструкция по уходу',
+    icon: (
+      <>
+        <path d="M6 3h12v18H6z" />
+        <path d="M9 8h6M9 12h6M9 16h4" />
+      </>
+    ),
+  },
+  {
+    label: 'Подкормка для цветов',
+    icon: (
+      <>
+        <path d="M12 3c3 3.5 5 6.7 5 9.5a5 5 0 01-10 0C7 9.7 9 6.5 12 3z" />
+      </>
+    ),
+  },
+  {
+    label: 'Фирменная упаковка',
+    icon: (
+      <>
+        <path d="M3 8l9-5 9 5-9 5-9-5z" />
+        <path d="M3 8v8l9 5 9-5V8M12 13v8" />
+      </>
+    ),
+  },
+  {
+    label: 'Аквабокс для перевозки',
+    icon: (
+      <>
+        <rect x="3" y="7" width="18" height="13" rx="2" />
+        <path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M3 12h18" />
+      </>
+    ),
+  },
+];
+
+export default function ProductPageClient({
+  product,
+  related,
+  addons,
+}: {
+  product: Product;
+  related: Product[];
+  addons: Product[];
+}) {
   const { addToCart, openCart } = useCart();
   const [mult, setMult] = useState(1);
   const [flowerColor, setFlowerColor] = useState(FLOWER_COLORS[0].name);
   const [wrapColor, setWrapColor] = useState(WRAP_COLORS[0].name);
   const [qty, setQty] = useState(1);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set());
 
-  const images = product.image ? [product.image] : [];
+  const images = product.images && product.images.length > 0 ? product.images : product.image ? [product.image] : [];
   const unitPrice = Math.round(product.price * mult);
-  const total = unitPrice * qty;
+  const addonsTotal = addons.filter((a) => selectedAddons.has(a.id)).reduce((sum, a) => sum + a.price, 0);
+  const total = unitPrice * qty + addonsTotal;
   const sizeLabel = SIZE_CHIPS.find((c) => c.mult === mult)?.label ?? 'Стандарт';
+
+  function prevImage() {
+    setActiveIdx((i) => (i - 1 + images.length) % images.length);
+  }
+  function nextImage() {
+    setActiveIdx((i) => (i + 1) % images.length);
+  }
+  function toggleAddon(id: string) {
+    setSelectedAddons((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   function handleAdd() {
     addToCart({
@@ -48,6 +144,11 @@ export default function ProductPageClient({ product, related }: { product: Produ
       sizeLabel: `${sizeLabel} · ${flowerColor} · упаковка ${wrapColor}`,
       qty,
     });
+    for (const a of addons) {
+      if (selectedAddons.has(a.id)) {
+        addToCart({ id: a.id, name: a.name, price: a.price, sizeLabel: 'Доп. товар', qty: 1 });
+      }
+    }
     openCart();
   }
 
@@ -68,19 +169,24 @@ export default function ProductPageClient({ product, related }: { product: Produ
             {images.length > 1 && (
               <div className="pp-thumbs">
                 {images.map((src, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <button key={i} className="pp-thumb is-active" type="button">
+                  <button
+                    key={i}
+                    className={`pp-thumb ${i === activeIdx ? 'is-active' : ''}`}
+                    type="button"
+                    onClick={() => setActiveIdx(i)}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={src} alt="" />
                   </button>
                 ))}
               </div>
             )}
             <div className="pp-main">
-              {images[0] ? (
+              {images[activeIdx] ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   className="pp-main-img"
-                  src={images[0]}
+                  src={images[activeIdx]}
                   alt={product.name}
                   onClick={() => setLightboxOpen(true)}
                 />
@@ -90,7 +196,17 @@ export default function ProductPageClient({ product, related }: { product: Produ
                   <circle cx="100" cy="75" r="26" fill="var(--accent)" />
                 </svg>
               )}
-              {images[0] && (
+              {images.length > 1 && (
+                <>
+                  <button className="pp-arrow pp-arrow-prev" type="button" aria-label="Предыдущее фото" onClick={prevImage}>
+                    ‹
+                  </button>
+                  <button className="pp-arrow pp-arrow-next" type="button" aria-label="Следующее фото" onClick={nextImage}>
+                    ›
+                  </button>
+                </>
+              )}
+              {images[activeIdx] && (
                 <button className="pp-zoom-btn" type="button" aria-label="На весь экран" onClick={() => setLightboxOpen(true)}>
                   <svg className="icon" viewBox="0 0 24 24">
                     <path d="M9 3H3v6M15 3h6v6M21 15v6h-6M3 15v6h6" />
@@ -105,12 +221,27 @@ export default function ProductPageClient({ product, related }: { product: Produ
             <h1>{product.name}</h1>
             <p className="pp-lede">{product.description || 'Свежий букет ручной сборки от Sami Flowers.'}</p>
             <div className="pp-price">{formatPrice(total)}</div>
+            <span className="pp-bonus">+5% бонусами на следующий заказ</span>
 
             <div className="pp-availability">
               <svg className="icon" viewBox="0 0 24 24">
                 <path d="M20 6L9 17l-5-5" />
               </svg>
               В наличии сейчас · доставка от 90 минут по Павлодару
+            </div>
+
+            <div className="pp-advantages">
+              {ADVANTAGES.map((a, i) => (
+                <div key={i} className="pp-adv-item">
+                  <span className="icon-wrap">
+                    <svg className="icon" viewBox="0 0 24 24">
+                      {a.icon}
+                      {a.icon2}
+                    </svg>
+                  </span>
+                  <span>{a.label}</span>
+                </div>
+              ))}
             </div>
 
             <div className="pp-section">
@@ -138,6 +269,22 @@ export default function ProductPageClient({ product, related }: { product: Produ
                   >
                     {c.label}
                   </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="pp-section">
+              <h4>К этому букету вы обязательно получите</h4>
+              <div className="pp-included">
+                {INCLUDED_ITEMS.map((it, i) => (
+                  <div key={i} className="pp-included-item">
+                    <span className="icon-wrap">
+                      <svg className="icon" viewBox="0 0 24 24">
+                        {it.icon}
+                      </svg>
+                    </span>
+                    <span>{it.label}</span>
+                  </div>
                 ))}
               </div>
             </div>
@@ -179,6 +326,32 @@ export default function ProductPageClient({ product, related }: { product: Produ
                 ))}
               </div>
             </div>
+
+            {addons.length > 0 && (
+              <div className="pp-section">
+                <h4>Украсьте ваш букет</h4>
+                <div className="pp-addons-row">
+                  {addons.map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      className={`pp-addon-card ${selectedAddons.has(a.id) ? 'is-active' : ''}`}
+                      onClick={() => toggleAddon(a.id)}
+                    >
+                      <span className="pp-addon-check">✓</span>
+                      {a.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img className="pp-addon-img" src={a.image} alt="" />
+                      ) : (
+                        <span className="pp-addon-img" />
+                      )}
+                      <span className="pp-addon-name">{a.name}</span>
+                      <span className="pp-addon-price">+{formatPrice(a.price)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="pp-qty-row">
               <span className="field-label" style={{ margin: 0 }}>
@@ -256,13 +429,50 @@ export default function ProductPageClient({ product, related }: { product: Produ
         </button>
       </div>
 
-      {lightboxOpen && images[0] && (
+      {lightboxOpen && images[activeIdx] && (
         <div className="lightbox open" onClick={() => setLightboxOpen(false)}>
-          <button className="sheet-close" style={{ position: 'fixed', top: 16, right: 16 }} type="button" aria-label="Закрыть">
+          <button
+            className="sheet-close"
+            style={{ position: 'fixed', top: 16, right: 16 }}
+            type="button"
+            aria-label="Закрыть"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxOpen(false);
+            }}
+          >
             ×
           </button>
+          {images.length > 1 && (
+            <>
+              <button
+                className="pp-arrow pp-arrow-prev"
+                style={{ position: 'fixed', left: 16, top: '50%' }}
+                type="button"
+                aria-label="Предыдущее фото"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevImage();
+                }}
+              >
+                ‹
+              </button>
+              <button
+                className="pp-arrow pp-arrow-next"
+                style={{ position: 'fixed', right: 16, top: '50%' }}
+                type="button"
+                aria-label="Следующее фото"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextImage();
+                }}
+              >
+                ›
+              </button>
+            </>
+          )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={images[0]} alt={product.name} />
+          <img src={images[activeIdx]} alt={product.name} onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
