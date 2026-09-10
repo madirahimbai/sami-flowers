@@ -119,6 +119,7 @@ export default function ProductPageClient({
   const unitPrice = Math.round(product.price * mult);
   const addonsTotal = addons.filter((a) => selectedAddons.has(a.id)).reduce((sum, a) => sum + a.price, 0);
   const total = unitPrice * qty + addonsTotal;
+  const bonusAmount = Math.round(total * 0.05);
   const sizeLabel = SIZE_CHIPS.find((c) => c.mult === mult)?.label ?? 'Стандарт';
 
   function prevImage() {
@@ -221,7 +222,13 @@ export default function ProductPageClient({
             <h1>{product.name}</h1>
             <p className="pp-lede">{product.description || 'Свежий букет ручной сборки от Sami Flowers.'}</p>
             <div className="pp-price">{formatPrice(total)}</div>
-            <span className="pp-bonus">+5% бонусами на следующий заказ</span>
+            <span className="pp-bonus">
+              <svg className="icon" viewBox="0 0 24 24">
+                <rect x="3" y="8" width="18" height="13" rx="1" />
+                <path d="M3 8h18M12 8v13M7.5 8a2.5 2.5 0 010-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 010 5" />
+              </svg>
+              +{formatPrice(bonusAmount)} бонусами на следующий заказ
+            </span>
 
             <div className="pp-availability">
               <svg className="icon" viewBox="0 0 24 24">
