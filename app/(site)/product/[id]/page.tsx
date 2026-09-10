@@ -11,6 +11,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
   const all = await listProducts('bouquet');
   const related = all.filter((p) => p.id !== product.id).sort(() => Math.random() - 0.5).slice(0, 4);
   const addons = (await listProducts('addon')).filter((p) => p.available);
+  const included = (await listProducts('included')).filter((p) => p.available);
 
-  return <ProductPageClient product={product} related={related} addons={addons} />;
+  return <ProductPageClient product={product} related={related} addons={addons} included={included} />;
 }
