@@ -19,7 +19,8 @@ export default function Header() {
       <div className="nav-shell">
         <div className="nav-pill wrap" style={{ maxWidth: 1132 }}>
           <Link className="brand" href="/">
-            <span className="brand-name">Sami Flowers</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="brand-logo" src="/logo.svg" alt="Sami Flowers" />
           </Link>
           <ul className="nav-links">
             <li>
