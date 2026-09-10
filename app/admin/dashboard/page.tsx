@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/types';
 
-function emptyProduct(category: 'bouquet' | 'gift'): Product {
+function emptyProduct(category: 'bouquet' | 'gift' | 'addon'): Product {
   return {
     id: '',
     name: '',
@@ -12,11 +12,14 @@ function emptyProduct(category: 'bouquet' | 'gift'): Product {
     price: 0,
     description: '',
     image: null,
+    images: [],
     category,
     tag: null,
     available: true,
   };
 }
+
+const MAX_IMAGES = 5;
 
 function ProductRow({
   product,
@@ -29,7 +32,10 @@ function ProductRow({
   onDeleted: (id: string) => void;
   isNew?: boolean;
 }) {
-  const [draft, setDraft] = useState<Product>(product);
+  const [draft, setDraft] = useState<Product>(() => ({
+    ...product,
+    images: product.images && product.images.length > 0 ? product.images : product.image ? [product.image] : [],
+  }));
   const [status, setStatus] = useState<'idle' | 'saving' | 'ok' | 'error'>('idle');
   const [uploading, setUploading] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
@@ -39,8 +45,9 @@ function ProductRow({
     setStatus('idle');
   }
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleAddPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
     setUploading(true);
     try {
@@ -49,13 +56,23 @@ function ProductRow({
       const res = await fetch('/api/upload', { method: 'POST', body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'upload_failed');
-      update('image', data.url);
+      setDraft((d) => {
+        const images = [...d.images, data.url].slice(0, MAX_IMAGES);
+        return { ...d, images, image: images[0] ?? null };
+      });
     } catch {
       setStatusMsg('Не удалось загрузить фото');
       setStatus('error');
     } finally {
       setUploading(false);
     }
+  }
+
+  function removePhoto(idx: number) {
+    setDraft((d) => {
+      const images = d.images.filter((_, i) => i !== idx);
+      return { ...d, images, image: images[0] ?? null };
+    });
   }
 
   async function save() {
@@ -104,17 +121,26 @@ function ProductRow({
 
   return (
     <div className="admin-row">
-      <div>
-        {draft.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={draft.image} alt="" />
-        ) : (
-          <div className="admin-row-noimg">нет фото</div>
+      <div className="ar-photos">
+        {draft.images.length === 0 && <div className="admin-row-noimg">нет фото</div>}
+        <div className="ar-photo-grid">
+          {draft.images.map((src, i) => (
+            <div key={i} className="ar-photo-thumb">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt="" />
+              <button type="button" className="ar-photo-remove" onClick={() => removePhoto(i)} aria-label="Удалить фото">
+                ×
+              </button>
+              {i === 0 && <span className="ar-photo-cover">обложка</span>}
+            </div>
+          ))}
+        </div>
+        {draft.images.length < MAX_IMAGES && (
+          <label className="ar-photo">
+            {uploading ? 'Загрузка…' : `+ Добавить фото (${draft.images.length}/${MAX_IMAGES})`}
+            <input type="file" accept="image/*" onChange={handleAddPhoto} disabled={uploading} hidden />
+          </label>
         )}
-        <label className="ar-photo">
-          {uploading ? 'Загрузка…' : 'Заменить фото'}
-          <input type="file" accept="image/*" onChange={handleFile} disabled={uploading} hidden />
-        </label>
       </div>
       <div className="ar-fields">
         {isNew && (
@@ -158,10 +184,11 @@ function ProductRow({
           <select
             className="cart-input ar-price"
             value={draft.category}
-            onChange={(e) => update('category', e.target.value as 'bouquet' | 'gift')}
+            onChange={(e) => update('category', e.target.value as 'bouquet' | 'gift' | 'addon')}
           >
             <option value="bouquet">Букет</option>
             <option value="gift">Подарок</option>
+            <option value="addon">Доп. товар (украсить букет)</option>
           </select>
         </div>
         <label className="ar-avail">
@@ -193,7 +220,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [newRows, setNewRows] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'bouquet' | 'gift'>('all');
+  const [filter, setFilter] = useState<'all' | 'bouquet' | 'gift' | 'addon'>('all');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -240,11 +267,14 @@ export default function AdminDashboard() {
           <button className={filter === 'gift' ? 'is-active' : ''} onClick={() => setFilter('gift')}>
             Подарки
           </button>
+          <button className={filter === 'addon' ? 'is-active' : ''} onClick={() => setFilter('addon')}>
+            Допы
+          </button>
         </div>
         <button
           className="btn btn-primary"
           type="button"
-          onClick={() => setNewRows((r) => [emptyProduct(filter === 'gift' ? 'gift' : 'bouquet'), ...r])}
+          onClick={() => setNewRows((r) => [emptyProduct(filter === 'gift' || filter === 'addon' ? filter : 'bouquet'), ...r])}
         >
           + Добавить товар
         </button>
