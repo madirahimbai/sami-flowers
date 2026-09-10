@@ -25,9 +25,16 @@ export default function CartDrawer() {
   const [cardMessage, setCardMessage] = useState('');
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
+  const [formError, setFormError] = useState('');
 
   async function checkout() {
     if (cart.length === 0) return;
+    const phoneDigits = orderPhone.replace(/\D/g, '');
+    if (!orderName.trim() || phoneDigits.length < 10) {
+      setFormError('Укажите имя и телефон — без них мы не сможем связаться и подтвердить заказ');
+      return;
+    }
+    setFormError('');
     setSending(true);
     const payload = {
       items: cart,
@@ -139,21 +146,25 @@ export default function CartDrawer() {
                 </div>
               )}
 
-              <span className="field-label">Ваши контакты</span>
+              <span className="field-label">Ваши контакты — как к вам обращаться и куда позвонить *</span>
               <div className="field-row">
                 <input
-                  className="cart-input"
+                  className={`cart-input ${formError && !orderName.trim() ? 'has-error' : ''}`}
                   value={orderName}
                   onChange={(e) => setOrderName(e.target.value)}
                   placeholder="Ваше имя"
+                  required
                 />
                 <input
-                  className="cart-input"
+                  className={`cart-input ${formError && orderPhone.replace(/\D/g, '').length < 10 ? 'has-error' : ''}`}
                   value={orderPhone}
                   onChange={(e) => setOrderPhone(e.target.value)}
                   placeholder="Ваш телефон"
+                  type="tel"
+                  required
                 />
               </div>
+              {formError && <p className="cart-error">{formError}</p>}
 
               <span className="field-label">Способ получения</span>
               <div className="delivery-toggle">
