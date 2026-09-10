@@ -608,30 +608,39 @@
   .pp-adv-item span:last-child{font-size:12px;line-height:1.35;color:var(--text);}
   @media (max-width:480px){.pp-advantages{grid-template-columns:1fr;}}
 
-  .pp-included{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
-  .pp-included-item{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;}
-  .pp-included-item .icon-wrap{
-    width:44px;height:44px;border-radius:14px;background:var(--accent-soft);
-    display:flex;align-items:center;justify-content:center;color:var(--accent-strong);
-  }
-  .pp-included-item span:last-child{font-size:10px;color:var(--text-muted);line-height:1.3;}
-  @media (max-width:600px){.pp-included{grid-template-columns:repeat(3,1fr);}}
+  /* Photo-forward grid shared by "included items" and "addons" — plain
+     square photo + caption, mirroring how mateflowers.ru presents both. */
+  .pp-bento{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  @media (max-width:600px){.pp-bento{grid-template-columns:repeat(2,1fr);}}
 
-  .pp-addons-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;}
-  .pp-addon-card{
-    position:relative;flex-shrink:0;width:108px;border:1px solid var(--border);border-radius:16px;
-    background:var(--surface);cursor:pointer;padding:8px;display:flex;flex-direction:column;gap:6px;
-    text-align:left;transition:border-color .25s ease,background .25s ease;
+  .pp-bento-photo{display:flex;flex-direction:column;gap:8px;}
+  .pp-bento-photo img,
+  .pp-bento-photo-empty{
+    width:100%;aspect-ratio:1/1;border-radius:14px;object-fit:cover;
+    background:var(--surface-2);display:block;
   }
-  .pp-addon-card.is-active{border-color:var(--accent);background:var(--accent-soft);}
-  .pp-addon-img{width:100%;aspect-ratio:1/1;border-radius:10px;object-fit:cover;background:var(--surface-2);display:block;}
-  .pp-addon-name{font-size:11px;font-weight:700;line-height:1.25;}
+  .pp-bento-photo-empty.pp-bento-icon{display:flex;align-items:center;justify-content:center;color:var(--accent-strong);}
+  .pp-bento-photo-empty.pp-bento-icon .icon{width:28px;height:28px;}
+  .pp-bento-photo span:last-child{font-size:11.5px;font-weight:600;text-align:center;line-height:1.3;}
+
+  .pp-addon-card{
+    position:relative;border:none;border-radius:14px;background:none;cursor:pointer;
+    padding:0;display:flex;flex-direction:column;gap:8px;text-align:left;
+  }
+  .pp-addon-img{
+    width:100%;aspect-ratio:1/1;border-radius:14px;object-fit:cover;background:var(--surface-2);
+    display:block;outline:2px solid transparent;outline-offset:2px;transition:outline-color .25s ease;
+  }
+  .pp-addon-card.is-active .pp-addon-img{outline-color:var(--accent);}
+  .pp-addon-body{display:flex;flex-direction:column;gap:1px;}
+  .pp-addon-name{font-size:11.5px;font-weight:600;line-height:1.25;}
   .pp-addon-price{font-size:10.5px;color:var(--text-muted);}
   .pp-addon-card.is-active .pp-addon-price{color:var(--accent-strong);}
   .pp-addon-check{
-    position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;z-index:1;
+    position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;z-index:1;
     background:var(--accent);color:#fff8f6;display:flex;align-items:center;justify-content:center;
-    font-size:11px;opacity:0;transform:scale(.6);transition:opacity .2s ease,transform .2s ease;
+    font-size:12px;opacity:0;transform:scale(.6);transition:opacity .2s ease,transform .2s ease;
+    box-shadow:0 4px 10px -4px hsla(var(--shadow-tint),.6);
   }
   .pp-addon-card.is-active .pp-addon-check{opacity:1;transform:scale(1);}
   .pp-availability{
