@@ -275,7 +275,7 @@
   .day-strip .price .now{font-family:"Fraunces",serif;font-size:22px;color:var(--accent-strong);}
   @media (max-width:640px){.day-strip{flex-wrap:wrap;}.day-strip .price{margin-left:auto;}}
 
-  .catalog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  .catalog-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
   .catalog-grid .card:nth-child(3n+1){grid-row:span 1;}
   .card{
     background:var(--surface);border:1px solid var(--border);border-radius:24px;overflow:hidden;
@@ -776,6 +776,7 @@
   font-size:9.5px;color:var(--text-muted);text-align:center;
 }
 .ar-avail{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-muted);margin-top:2px;}
+.ar-popularity{font-size:11.5px;color:var(--accent-strong);font-weight:700;}
 .ar-actions{display:flex;align-items:center;gap:14px;margin-top:6px;flex-wrap:wrap;}
 
 /* text-based brand mark used in the React header (image logo omitted for now) */
