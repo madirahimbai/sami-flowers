@@ -168,6 +168,7 @@ function ProductRow({
             onChange={(e) => update('price', parseInt(e.target.value, 10) || 0)}
           />
         </div>
+        {!isNew && <span className="ar-popularity">Продано: {draft.order_count ?? 0} шт</span>}
         <textarea
           className="cart-input"
           placeholder="Описание / состав"
@@ -222,6 +223,7 @@ export default function AdminDashboard() {
   const [newRows, setNewRows] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'bouquet' | 'gift' | 'addon' | 'included'>('all');
+  const [sortPopular, setSortPopular] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -241,7 +243,9 @@ export default function AdminDashboard() {
     router.refresh();
   }
 
-  const visible = products.filter((p) => filter === 'all' || p.category === filter);
+  const visible = products
+    .filter((p) => filter === 'all' || p.category === filter)
+    .sort((a, b) => (sortPopular ? (b.order_count ?? 0) - (a.order_count ?? 0) : 0));
 
   return (
     <div className="admin-dashboard-wrap">
@@ -273,6 +277,9 @@ export default function AdminDashboard() {
           </button>
           <button className={filter === 'included' ? 'is-active' : ''} onClick={() => setFilter('included')}>
             В комплекте
+          </button>
+          <button className={sortPopular ? 'is-active' : ''} onClick={() => setSortPopular((v) => !v)}>
+            Сначала популярные
           </button>
         </div>
         <button
