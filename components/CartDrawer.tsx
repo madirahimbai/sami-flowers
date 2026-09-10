@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { useCart } from '@/lib/cart-context';
 import { formatPrice } from '@/lib/types';
 
-const WHATSAPP_NUMBER = '77761115319';
+const PICKUP_LOCATIONS = [
+  { label: 'Торайгырова, 73, 1 этаж', phone: '77761115319' },
+  { label: 'Амангельды, 23', phone: '77076828707' },
+];
 
 export default function CartDrawer() {
   const { cart, removeFromCart, total, isCartOpen, closeCart, clearCart } = useCart();
@@ -15,6 +18,7 @@ export default function CartDrawer() {
   const [orderName, setOrderName] = useState('');
   const [orderPhone, setOrderPhone] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<'self' | 'courier'>('self');
+  const [pickupIdx, setPickupIdx] = useState(0);
   const [address, setAddress] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [deliveryTime, setDeliveryTime] = useState('');
@@ -38,6 +42,7 @@ export default function CartDrawer() {
       deliveryTime,
       cardMessage,
       comment,
+      pickupAddress: deliveryMethod === 'self' ? PICKUP_LOCATIONS[pickupIdx].label : undefined,
     };
     let waText = '';
     try {
@@ -54,7 +59,8 @@ export default function CartDrawer() {
     }
     setSending(false);
     if (waText) {
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(waText)}`, '_blank');
+      const targetPhone = deliveryMethod === 'self' ? PICKUP_LOCATIONS[pickupIdx].phone : PICKUP_LOCATIONS[0].phone;
+      window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(waText)}`, '_blank');
     }
     clearCart();
     closeCart();
@@ -174,9 +180,18 @@ export default function CartDrawer() {
                   placeholder="Адрес доставки, ориентир"
                 />
               ) : (
-                <p className="pp-demo-note" style={{ marginTop: 8, fontSize: 12.5 }}>
-                  Самовывоз: Павлодар, Торайгырова, 73, 1 этаж
-                </p>
+                <select
+                  className="cart-input"
+                  style={{ marginTop: 8 }}
+                  value={pickupIdx}
+                  onChange={(e) => setPickupIdx(Number(e.target.value))}
+                >
+                  {PICKUP_LOCATIONS.map((p, i) => (
+                    <option key={p.label} value={i}>
+                      Самовывоз: Павлодар, {p.label}
+                    </option>
+                  ))}
+                </select>
               )}
               <div className="field-row" style={{ marginTop: 10 }}>
                 <input
