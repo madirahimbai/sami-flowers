@@ -12,6 +12,10 @@ export async function POST(req: NextRequest) {
   if (!body || !Array.isArray(body.items) || body.items.length === 0) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
+  const phoneDigits = String(body.orderPhone || '').replace(/\D/g, '');
+  if (!String(body.orderName || '').trim() || phoneDigits.length < 10) {
+    return NextResponse.json({ error: 'missing_contact' }, { status: 400 });
+  }
   const items: OrderItem[] = body.items;
   const total = items.reduce((s, i) => s + i.price * i.qty, 0);
 
