@@ -4,7 +4,8 @@ export default function Footer() {
       <div className="wrap">
         <div className="foot-grid">
           <div className="foot-brand">
-            <span className="brand-name">Sami Flowers</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="foot-logo" src="/logo.svg" alt="Sami Flowers" />
             <p>Мастерская букетов и доставка цветов по Павлодару. Собираем из свежих поставок, согласовываем по фото.</p>
           </div>
           <div className="foot-col">
