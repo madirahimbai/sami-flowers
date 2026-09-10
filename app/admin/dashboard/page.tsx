@@ -75,6 +75,21 @@ function ProductRow({
     });
   }
 
+  async function resetStats() {
+    if (!confirm(`Сбросить счётчик продаж для «${draft.name}»?`)) return;
+    try {
+      await fetch('/api/admin/reset-stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: product.id }),
+      });
+      setDraft((d) => ({ ...d, order_count: 0 }));
+    } catch {
+      setStatusMsg('Не удалось сбросить статистику');
+      setStatus('error');
+    }
+  }
+
   async function save() {
     if (!draft.id.trim() || !draft.name.trim()) {
       setStatusMsg('Заполните id и название');
@@ -168,7 +183,14 @@ function ProductRow({
             onChange={(e) => update('price', parseInt(e.target.value, 10) || 0)}
           />
         </div>
-        {!isNew && <span className="ar-popularity">Продано: {draft.order_count ?? 0} шт</span>}
+        {!isNew && (
+          <span className="ar-popularity">
+            Продано: {draft.order_count ?? 0} шт
+            <button type="button" className="ar-remove" style={{ marginLeft: 8, fontSize: 11 }} onClick={resetStats}>
+              сбросить
+            </button>
+          </span>
+        )}
         <textarea
           className="cart-input"
           placeholder="Описание / состав"
@@ -243,6 +265,12 @@ export default function AdminDashboard() {
     router.refresh();
   }
 
+  async function resetAllStats() {
+    if (!confirm('Сбросить счётчик продаж у ВСЕХ товаров? Это нельзя отменить.')) return;
+    await fetch('/api/admin/reset-stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    setProducts((prev) => prev.map((p) => ({ ...p, order_count: 0 })));
+  }
+
   const visible = products
     .filter((p) => filter === 'all' || p.category === filter)
     .sort((a, b) => (sortPopular ? (b.order_count ?? 0) - (a.order_count ?? 0) : 0));
@@ -281,6 +309,7 @@ export default function AdminDashboard() {
           <button className={sortPopular ? 'is-active' : ''} onClick={() => setSortPopular((v) => !v)}>
             Сначала популярные
           </button>
+          <button onClick={resetAllStats}>Сбросить статистику</button>
         </div>
         <button
           className="btn btn-primary"
