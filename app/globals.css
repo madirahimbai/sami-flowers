@@ -326,7 +326,21 @@
   .size-chip.is-active{background:var(--surface);border-color:var(--accent);color:var(--accent-strong);}
 
   @media (max-width:900px){.catalog-grid{grid-template-columns:1fr 1fr;}}
-  @media (max-width:600px){.catalog-grid{grid-template-columns:1fr;}}
+  @media (max-width:600px){
+    .catalog-grid{grid-template-columns:1fr 1fr;gap:12px;}
+    .card{border-radius:16px;}
+    .card-body{padding:12px 12px 14px;gap:7px;}
+    .card-body h3{font-size:13.5px;line-height:1.3;}
+    .card-body .desc{display:none;}
+    .card-tag{top:8px;left:8px;font-size:9.5px;padding:4px 9px;}
+    .card-fav{top:8px;right:8px;width:28px;height:28px;}
+    .card-fav .icon{width:13px;height:13px;}
+    .size-chips{gap:4px;}
+    .size-chip{font-size:9.5px;padding:3px 7px;}
+    .card-foot{padding-top:2px;}
+    .card-foot .price{font-size:15px;}
+    .order-btn{width:32px;height:32px;}
+  }
 
   .catalog-more{display:flex;justify-content:center;margin-top:36px;}
 
