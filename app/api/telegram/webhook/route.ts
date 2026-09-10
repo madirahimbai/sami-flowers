@@ -18,7 +18,9 @@ export const dynamic = 'force-dynamic';
  * every webhook call with the secret_token we set at registration, checked
  * below against TELEGRAM_WEBHOOK_SECRET — without it, anyone who guessed
  * this URL could POST fake updates and spam products into the store.
- * Only messages from TELEGRAM_PRODUCTS_CHAT_ID are honored.
+ * Only messages from a chat id listed in TELEGRAM_PRODUCTS_CHAT_ID are
+ * honored — a comma-separated list, so several staff members' private
+ * chats (or one shared group's id) can all be trusted at once.
  */
 export async function POST(req: NextRequest) {
   const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
@@ -35,8 +37,11 @@ export async function POST(req: NextRequest) {
   if (!message) return NextResponse.json({ ok: true });
 
   const chatId = String(message.chat?.id ?? '');
-  const allowedChatId = process.env.TELEGRAM_PRODUCTS_CHAT_ID;
-  if (!allowedChatId || chatId !== allowedChatId) {
+  const allowedChatIds = (process.env.TELEGRAM_PRODUCTS_CHAT_ID || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (allowedChatIds.length === 0 || !allowedChatIds.includes(chatId)) {
     return NextResponse.json({ ok: true }); // silently ignore anyone else who finds the bot
   }
 
