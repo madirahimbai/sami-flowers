@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
 import { upsertProduct, countProducts } from '@/lib/db';
 import seedProducts from '@/data/seed-products.json';
 
@@ -20,11 +19,11 @@ type SeedProduct = {
 
 /**
  * One-time setup: populates the database with the shop's starting catalog
- * (real bouquets from the spreadsheet import, plus the gift items) and
- * uploads their photos to Blob storage. Protected by SEED_SECRET so it
- * can't be triggered by a stranger — call it once after deploying, then
- * forget about it (re-running is safe: it just re-uploads photos and
- * overwrites the same rows).
+ * (real bouquets from the spreadsheet import, plus the gift items),
+ * reading each photo from /public/seed-images and storing it as a data:
+ * URI directly on the row. Protected by SEED_SECRET so it can't be
+ * triggered by a stranger — call it once after deploying, then forget
+ * about it (re-running is safe: it just overwrites the same rows).
  *
  * Usage: POST /api/admin/seed  with header  x-seed-secret: <SEED_SECRET>
  */
@@ -42,19 +41,13 @@ export async function POST(req: NextRequest) {
 
   for (let i = 0; i < products.length; i++) {
     const p = products[i];
-    let imageUrl: string | null = null;
+    let imageDataUri: string | null = null;
     if (p.image) {
       try {
         const res = await fetch(origin + p.image);
         if (!res.ok) throw new Error(`fetch ${p.image} failed: ${res.status}`);
-        const buf = await res.arrayBuffer();
-        const ext = p.image.split('.').pop() || 'jpg';
-        const blob = await put(`products/${p.id}.${ext}`, Buffer.from(buf), {
-          access: 'public',
-          contentType: 'image/jpeg',
-          addRandomSuffix: false,
-        });
-        imageUrl = blob.url;
+        const buf = Buffer.from(await res.arrayBuffer());
+        imageDataUri = `data:image/jpeg;base64,${buf.toString('base64')}`;
       } catch (e: any) {
         errors.push(`${p.id}: ${e.message || e}`);
       }
@@ -66,7 +59,7 @@ export async function POST(req: NextRequest) {
         number: p.number,
         price: p.price,
         description: p.desc,
-        image: imageUrl,
+        image: imageDataUri,
         category: p.category,
         tag: p.tag,
         available: p.available,
