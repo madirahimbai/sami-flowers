@@ -5,7 +5,8 @@ export type Product = {
   price: number;
   description: string | null;
   image: string | null;
-  category: 'bouquet' | 'gift';
+  images: string[];
+  category: 'bouquet' | 'gift' | 'addon';
   tag: string | null;
   available: boolean;
 };
