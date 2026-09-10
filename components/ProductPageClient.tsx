@@ -6,9 +6,10 @@ import { Product, formatPrice } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
 
 const SIZE_CHIPS = [
-  { label: 'S', mult: 0.7 },
-  { label: 'M', mult: 1 },
-  { label: 'L', mult: 1.5 },
+  { label: 'Стандарт', mult: 1 },
+  { label: '1.5х', mult: 1.5 },
+  { label: '2х', mult: 2 },
+  { label: '3х', mult: 3 },
 ];
 
 const FLOWER_COLORS = [
@@ -37,7 +38,7 @@ export default function ProductPageClient({ product, related }: { product: Produ
   const images = product.image ? [product.image] : [];
   const unitPrice = Math.round(product.price * mult);
   const total = unitPrice * qty;
-  const sizeLabel = SIZE_CHIPS.find((c) => c.mult === mult)?.label ?? 'M';
+  const sizeLabel = SIZE_CHIPS.find((c) => c.mult === mult)?.label ?? 'Стандарт';
 
   function handleAdd() {
     addToCart({
