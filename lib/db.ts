@@ -12,6 +12,7 @@ export type Product = {
   tag: string | null;
   available: boolean;
   sort_order: number;
+  order_count: number; // total units ever ordered — powers the "popular" sort in admin
 };
 
 declare global {
@@ -64,6 +65,9 @@ export function ensureSchema(): Promise<void> {
         // existing rows, no data migration needed since Postgres 11+.
         pool().query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB NOT NULL DEFAULT '[]'::jsonb`)
       )
+      .then(() =>
+        pool().query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS order_count INTEGER NOT NULL DEFAULT 0`)
+      )
       .then(() => undefined);
   }
   return schemaReady;
@@ -72,8 +76,8 @@ export function ensureSchema(): Promise<void> {
 export async function listProducts(category?: 'bouquet' | 'gift' | 'addon' | 'included'): Promise<Product[]> {
   await ensureSchema();
   const result = category
-    ? await pool().query<Product>('SELECT * FROM products WHERE category = $1 ORDER BY sort_order ASC, created_at ASC', [category])
-    : await pool().query<Product>('SELECT * FROM products ORDER BY sort_order ASC, created_at ASC');
+    ? await pool().query<Product>('SELECT * FROM products WHERE category = $1 ORDER BY price ASC, created_at ASC', [category])
+    : await pool().query<Product>('SELECT * FROM products ORDER BY price ASC, created_at ASC');
   return result.rows;
 }
 
@@ -118,6 +122,19 @@ export async function upsertProduct(p: {
     [p.id, p.name, p.number, p.price, p.description, p.image, JSON.stringify(p.images ?? []), p.category, p.tag, p.available, p.sort_order ?? 0]
   );
   return result.rows[0];
+}
+
+/** Bumps each product's running "units ordered" total — best-effort, called
+ * once per checkout so the admin panel can surface popular bouquets. */
+export async function incrementOrderCounts(items: { id: string; qty: number }[]): Promise<void> {
+  await ensureSchema();
+  for (const item of items) {
+    try {
+      await pool().query('UPDATE products SET order_count = order_count + $1 WHERE id = $2', [item.qty, item.id]);
+    } catch {
+      // best-effort stat — must never block an order
+    }
+  }
 }
 
 export async function deleteProduct(id: string): Promise<void> {
