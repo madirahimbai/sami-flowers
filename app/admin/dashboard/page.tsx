@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/types';
 
-function emptyProduct(category: 'bouquet' | 'gift' | 'addon'): Product {
+function emptyProduct(category: 'bouquet' | 'gift' | 'addon' | 'included'): Product {
   return {
     id: '',
     name: '',
@@ -184,11 +184,12 @@ function ProductRow({
           <select
             className="cart-input ar-price"
             value={draft.category}
-            onChange={(e) => update('category', e.target.value as 'bouquet' | 'gift' | 'addon')}
+            onChange={(e) => update('category', e.target.value as 'bouquet' | 'gift' | 'addon' | 'included')}
           >
             <option value="bouquet">Букет</option>
             <option value="gift">Подарок</option>
             <option value="addon">Доп. товар (украсить букет)</option>
+            <option value="included">В комплекте (открытка, подкормка и т.д.)</option>
           </select>
         </div>
         <label className="ar-avail">
@@ -220,7 +221,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [newRows, setNewRows] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'bouquet' | 'gift' | 'addon'>('all');
+  const [filter, setFilter] = useState<'all' | 'bouquet' | 'gift' | 'addon' | 'included'>('all');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -270,11 +271,19 @@ export default function AdminDashboard() {
           <button className={filter === 'addon' ? 'is-active' : ''} onClick={() => setFilter('addon')}>
             Допы
           </button>
+          <button className={filter === 'included' ? 'is-active' : ''} onClick={() => setFilter('included')}>
+            В комплекте
+          </button>
         </div>
         <button
           className="btn btn-primary"
           type="button"
-          onClick={() => setNewRows((r) => [emptyProduct(filter === 'gift' || filter === 'addon' ? filter : 'bouquet'), ...r])}
+          onClick={() =>
+            setNewRows((r) => [
+              emptyProduct(filter === 'gift' || filter === 'addon' || filter === 'included' ? filter : 'bouquet'),
+              ...r,
+            ])
+          }
         >
           + Добавить товар
         </button>
