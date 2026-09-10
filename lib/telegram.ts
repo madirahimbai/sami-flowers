@@ -43,3 +43,41 @@ export async function notifyTelegram(text: string, photoDataUri?: string | null)
     // best-effort duplicate channel; failures here must not break checkout
   }
 }
+
+/** Plain text reply — used by the webhook to confirm/explain, not tied to
+ * the order-notification formatting above. */
+export async function sendTelegramMessage(chatId: string, text: string): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text }),
+    });
+  } catch {
+    // best-effort — a failed reply must not break webhook processing
+  }
+}
+
+/** Downloads a photo the shop owner sent to the bot and returns it as a
+ * data: URI, ready to store on a product row the same way admin-panel
+ * uploads are. */
+export async function downloadTelegramPhoto(fileId: string): Promise<string | null> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return null;
+  try {
+    const fileRes = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
+    const fileData = await fileRes.json();
+    const filePath: string | undefined = fileData?.result?.file_path;
+    if (!filePath) return null;
+    const download = await fetch(`https://api.telegram.org/file/bot${token}/${filePath}`);
+    if (!download.ok) return null;
+    const buf = Buffer.from(await download.arrayBuffer());
+    const ext = filePath.split('.').pop()?.toLowerCase();
+    const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+    return `data:${mime};base64,${buf.toString('base64')}`;
+  } catch {
+    return null;
+  }
+}
