@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listProducts, upsertProduct } from '@/lib/db';
+import { listProductsFull, upsertProduct } from '@/lib/db';
 import { isAdminFromCookies } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
+// Only the admin dashboard calls this — it needs every product's full
+// photo gallery to manage them, unlike the lighter storefront queries.
 export async function GET() {
-  const products = await listProducts();
+  const products = await listProductsFull();
   return NextResponse.json({ products });
 }
 
