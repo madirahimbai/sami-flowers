@@ -9,6 +9,7 @@ export type Product = {
   category: 'bouquet' | 'gift' | 'addon' | 'included';
   tag: string | null;
   available: boolean;
+  order_count?: number;
 };
 
 export type CartItem = {
