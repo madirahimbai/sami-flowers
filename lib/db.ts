@@ -137,6 +137,16 @@ export async function incrementOrderCounts(items: { id: string; qty: number }[])
   }
 }
 
+export async function resetOrderCount(id: string): Promise<void> {
+  await ensureSchema();
+  await pool().query('UPDATE products SET order_count = 0 WHERE id = $1', [id]);
+}
+
+export async function resetAllOrderCounts(): Promise<void> {
+  await ensureSchema();
+  await pool().query('UPDATE products SET order_count = 0');
+}
+
 export async function deleteProduct(id: string): Promise<void> {
   await ensureSchema();
   await pool().query('DELETE FROM products WHERE id = $1', [id]);
