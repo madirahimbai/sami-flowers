@@ -12,7 +12,13 @@ export default function Footer() {
             <h4>Контакты</h4>
             <ul>
               <li>
-                <a href="tel:+77761115319">+7 776 111 53 19</a>
+                <a href="https://go.2gis.com/blll3" target="_blank" rel="noreferrer">
+                  Торайгырова, 73, 1 этаж
+                </a>{' '}
+                · <a href="tel:+77761115319">+7 776 111 53 19</a>
+              </li>
+              <li>
+                Амангельды, 23 · <a href="tel:+77076828707">+7 707 682 87 07</a>
               </li>
               <li>
                 <a href="https://wa.me/77761115319" target="_blank" rel="noreferrer">
@@ -22,11 +28,6 @@ export default function Footer() {
               <li>
                 <a href="https://instagram.com/samiflowers_pvl" target="_blank" rel="noreferrer">
                   @samiflowers_pvl
-                </a>
-              </li>
-              <li>
-                <a href="https://go.2gis.com/blll3" target="_blank" rel="noreferrer">
-                  Торайгырова, 73, 1 этаж
                 </a>
               </li>
               <li>
