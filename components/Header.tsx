@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useCart } from '@/lib/cart-context';
 
 const WHATSAPP_NUMBER = '77761115319';
 
 export default function Header() {
   const { count, openCart } = useCart();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <>
@@ -47,8 +49,40 @@ export default function Header() {
               <svg className="icon" viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z" /><path d="M6 6L4.5 3H2" /><circle cx="9.5" cy="20" r="1.2" /><circle cx="17.5" cy="20" r="1.2" /></svg>
               {count > 0 && <span className="tab-fav-count">{count}</span>}
             </button>
+            <button
+              className={`burger ${menuOpen ? 'open' : ''}`}
+              type="button"
+              aria-label="Меню"
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              <span />
+              <span />
+            </button>
           </div>
         </div>
+      </div>
+
+      <div className={`mobile-overlay ${menuOpen ? 'open' : ''}`}>
+        <button className="icon-btn mobile-overlay-close" type="button" aria-label="Закрыть меню" onClick={() => setMenuOpen(false)}>
+          ×
+        </button>
+        <Link href="/#catalog" onClick={() => setMenuOpen(false)}>
+          Каталог
+        </Link>
+        <Link href="/#contacts" onClick={() => setMenuOpen(false)}>
+          Контакты
+        </Link>
+        <a href="tel:+77761115319" onClick={() => setMenuOpen(false)}>
+          Позвонить
+        </a>
+        <a
+          href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Здравствуйте! Хочу заказать букет')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => setMenuOpen(false)}
+        >
+          WhatsApp
+        </a>
       </div>
     </>
   );
