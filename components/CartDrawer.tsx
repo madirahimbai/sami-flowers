@@ -11,6 +11,13 @@ const PICKUP_LOCATIONS = [
 
 const KASPI_LINK = 'https://pay.kaspi.kz/pay/ucljnkfw';
 
+// Hourly slots covering working hours 08:00–00:00 — used for both courier
+// delivery and pickup, since staff can commit to an hour at either.
+const DELIVERY_TIME_SLOTS = Array.from({ length: 16 }, (_, i) => {
+  const fmt = (h: number) => `${(h % 24).toString().padStart(2, '0')}:00`;
+  return `${fmt(8 + i)}–${fmt(9 + i)}`;
+});
+
 export default function CartDrawer() {
   const { cart, removeFromCart, total, isCartOpen, closeCart, clearCart } = useCart();
 
@@ -309,9 +316,11 @@ export default function CartDrawer() {
                   onChange={(e) => setDeliveryTime(e.target.value)}
                 >
                   <option value="">Время — как можно скорее</option>
-                  <option value="12:00–15:00">12:00–15:00</option>
-                  <option value="15:00–18:00">15:00–18:00</option>
-                  <option value="18:00–21:00">18:00–21:00</option>
+                  {DELIVERY_TIME_SLOTS.map((slot) => (
+                    <option key={slot} value={slot}>
+                      {slot}
+                    </option>
+                  ))}
                   <option value="Уточню в переписке">Уточню в переписке</option>
                 </select>
               </div>
