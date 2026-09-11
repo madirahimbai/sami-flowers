@@ -539,6 +539,16 @@
     transition:border-color .3s ease,color .3s ease,background .3s ease;
   }
   .delivery-opt.is-active{border-color:var(--accent);color:var(--accent-strong);background:var(--accent-soft);}
+
+  .pay-methods{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .pay-method{
+    display:inline-flex;align-items:center;gap:7px;flex:1;justify-content:center;
+    padding:10px 14px;border:1px solid var(--border);border-radius:12px;cursor:pointer;
+    font-size:13px;font-weight:700;background:var(--surface-2);color:var(--text);text-decoration:none;
+    transition:border-color .3s ease,color .3s ease,background .3s ease;
+  }
+  .pay-method .icon{width:16px;height:16px;color:var(--accent);}
+  .pay-method.is-active{border-color:var(--accent);color:var(--accent-strong);background:var(--accent-soft);}
   .cart-address{
     width:100%;border:1px solid var(--border);border-radius:12px;padding:11px 13px;
     font-family:"Manrope",sans-serif;font-size:13.5px;margin-top:10px;resize:vertical;min-height:56px;
