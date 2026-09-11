@@ -83,9 +83,10 @@ export async function POST(req: NextRequest) {
       .replace(/[,\-–]\s*$/, '')
       .trim() || `Букет ${new Date().toLocaleDateString('ru-RU')}`;
 
-  // Telegram sends several resolutions per photo, smallest first — the
-  // second-largest is plenty for the site and keeps the stored row small.
-  const photoRef = photos[Math.max(0, photos.length - 2)];
+  // Telegram sends several resolutions per photo, smallest first — take
+  // the largest so catalog photos stay sharp on bigger cards and the
+  // product-page gallery, at a modest cost in row size.
+  const photoRef = photos[photos.length - 1];
   const image = await downloadTelegramPhoto(token, photoRef.file_id);
   if (!image) {
     await sendTelegramMessage(token, chatId, 'Не удалось скачать фото из Telegram, попробуйте отправить ещё раз.');
