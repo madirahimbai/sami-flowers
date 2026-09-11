@@ -14,8 +14,26 @@ export default function Header() {
     <>
       <div className="util-bar">
         <div className="wrap">
-          <span className="util-pill">Павлодар</span>
-          <span className="util-hours">Доставляем с 08:00 до 24:00</span>
+          <div className="util-left">
+            <span className="util-pill">Павлодар</span>
+            <span className="util-hours">Доставляем с 08:00 до 24:00</span>
+          </div>
+          <div className="util-right">
+            <a className="util-link" href="https://go.2gis.com/blll3" target="_blank" rel="noreferrer">
+              <svg className="icon is-star" viewBox="0 0 24 24">
+                <path d="M12 2l2.9 6.9L22 9.7l-5.5 4.8L18 22l-6-3.6L6 22l1.5-7.5L2 9.7l7.1-.8z" />
+              </svg>
+              4,9 · 483 отзыва
+            </a>
+            <a className="util-link" href="https://instagram.com/samiflowers_pvl" target="_blank" rel="noreferrer">
+              <svg className="icon" viewBox="0 0 24 24">
+                <rect x="2" y="2" width="20" height="20" rx="5" />
+                <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+              </svg>
+              @samiflowers_pvl
+            </a>
+          </div>
         </div>
       </div>
       <div className="nav-shell">
@@ -35,6 +53,19 @@ export default function Header() {
           <div className="nav-cta">
             <a className="icon-btn" href="tel:+77761115319" aria-label="Позвонить">
               <svg className="icon" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.99.36 1.96.68 2.89a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.19-1.27a2 2 0 012.11-.45c.93.32 1.9.55 2.89.68A2 2 0 0122 16.92z" /></svg>
+            </a>
+            <a
+              className="icon-btn"
+              href="https://instagram.com/samiflowers_pvl"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+            >
+              <svg className="icon" viewBox="0 0 24 24">
+                <rect x="2" y="2" width="20" height="20" rx="5" />
+                <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+              </svg>
             </a>
             <a
               className="icon-btn is-accent"
@@ -82,6 +113,14 @@ export default function Header() {
           onClick={() => setMenuOpen(false)}
         >
           WhatsApp
+        </a>
+        <a
+          href="https://instagram.com/samiflowers_pvl"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => setMenuOpen(false)}
+        >
+          Instagram
         </a>
       </div>
     </>
