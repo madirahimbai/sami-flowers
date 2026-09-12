@@ -8,6 +8,8 @@ export type OrderBody = {
   orderPhone?: string;
   deliveryMethod?: string;
   address?: string;
+  deliveryZone?: string;
+  deliveryFee?: number;
   pickupAddress?: string;
   deliveryDate?: string;
   deliveryTime?: string;
@@ -23,13 +25,17 @@ export function formatPrice(n: number): string {
  * flow and the PayPal-paid checkout flow — `paymentNote` (e.g. "Оплата:
  * PayPal ✅") is appended when the order was already paid online. */
 export function buildOrderText(body: OrderBody, items: OrderItem[], paymentNote?: string): string {
-  const total = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const itemsTotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const deliveryFee = body.deliveryMethod === 'courier' ? body.deliveryFee ?? 0 : 0;
+  const total = itemsTotal + deliveryFee;
 
   const lines: string[] = ['Заказ с сайта Sami Flowers:', ''];
   for (const item of items) {
     lines.push(`• ${item.name} (${item.sizeLabel}) x${item.qty} — ${formatPrice(item.price * item.qty)}`);
   }
-  lines.push('', `Итого: ${formatPrice(total)}`);
+  lines.push('', `Товары: ${formatPrice(itemsTotal)}`);
+  if (deliveryFee > 0) lines.push(`Доставка (${body.deliveryZone || 'уточнить'}): ${formatPrice(deliveryFee)}`);
+  lines.push(`Итого: ${formatPrice(total)}`);
   if (paymentNote) lines.push(paymentNote);
   lines.push(
     body.recipientType === 'other'
@@ -38,7 +44,7 @@ export function buildOrderText(body: OrderBody, items: OrderItem[], paymentNote?
   );
   lines.push(`Заказывает: ${body.orderName || '(укажет в переписке)'}${body.orderPhone ? ', тел. ' + body.orderPhone : ''}`);
   if (body.deliveryMethod === 'courier') {
-    lines.push(`Способ получения: доставка`);
+    lines.push(`Способ получения: доставка, зона «${body.deliveryZone || 'уточнить'}»`);
     lines.push(`Адрес: ${body.address || '(уточнит в переписке)'}`);
     if (body.deliveryDate) lines.push(`Дата: ${body.deliveryDate}`);
     if (body.deliveryTime) lines.push(`Время: ${body.deliveryTime}`);
