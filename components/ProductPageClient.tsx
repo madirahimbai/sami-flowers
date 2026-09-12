@@ -12,19 +12,10 @@ const SIZE_CHIPS = [
   { label: '3х', mult: 3 },
 ];
 
-const FLOWER_COLORS = [
-  { name: 'Розовый', hex: '#e39fb4' },
-  { name: 'Белый', hex: '#f6f2ea' },
-  { name: 'Красный', hex: '#c23b4a' },
-  { name: 'Жёлтый', hex: '#e8c14a' },
-  { name: 'Сиреневый', hex: '#b79bd1' },
-];
-
 const WRAP_COLORS = [
   { name: 'Крафт', hex: '#b98a5e' },
   { name: 'Белый', hex: '#f6f2ea' },
   { name: 'Розовый', hex: '#f0c9d3' },
-  { name: 'Чёрный', hex: '#2b2320' },
 ];
 
 const ADVANTAGES = [
@@ -104,7 +95,6 @@ export default function ProductPageClient({
 }) {
   const { addToCart, openCart } = useCart();
   const [mult, setMult] = useState(1);
-  const [flowerColor, setFlowerColor] = useState(FLOWER_COLORS[0].name);
   const [wrapColor, setWrapColor] = useState(WRAP_COLORS[0].name);
   const [qty, setQty] = useState(1);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -138,7 +128,7 @@ export default function ProductPageClient({
       id: product.id,
       name: product.name,
       price: unitPrice,
-      sizeLabel: `${sizeLabel} · ${flowerColor} · упаковка ${wrapColor}`,
+      sizeLabel: `${sizeLabel} · упаковка ${wrapColor}`,
       qty,
       image: images[0] ?? product.image,
     });
@@ -332,25 +322,6 @@ export default function ProductPageClient({
                 </div>
               </div>
             )}
-
-            <div className="pp-section">
-              <h4>
-                Цвет цветов <span className="pp-demo-tag">демо</span>
-              </h4>
-              <div className="color-row">
-                {FLOWER_COLORS.map((c) => (
-                  <button
-                    key={c.name}
-                    type="button"
-                    className={`color-swatch ${flowerColor === c.name ? 'is-active' : ''}`}
-                    onClick={() => setFlowerColor(c.name)}
-                  >
-                    <span className="color-dot" style={{ background: c.hex }} />
-                    <span>{c.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div className="pp-section">
               <h4>
