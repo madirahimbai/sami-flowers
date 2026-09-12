@@ -11,6 +11,15 @@ const PICKUP_LOCATIONS = [
 
 const KASPI_LINK = 'https://pay.kaspi.kz/pay/ucljnkfw';
 
+const DELIVERY_ZONES = [
+  { label: 'По городу', price: 1500 },
+  { label: 'Аксу', price: 6500 },
+  { label: 'Жетекши', price: 3000 },
+  { label: 'Кенжеколь', price: 2500 },
+  { label: 'Ленинский, Мойылды, Павлодарское', price: 3500 },
+  { label: 'Лесозавод, Аквилон, загород', price: 1500 },
+];
+
 // Hourly slots covering working hours 08:00–00:00 — used for both courier
 // delivery and pickup, since staff can commit to an hour at either.
 const DELIVERY_TIME_SLOTS = Array.from({ length: 16 }, (_, i) => {
@@ -28,6 +37,7 @@ export default function CartDrawer() {
   const [orderPhone, setOrderPhone] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<'self' | 'courier'>('self');
   const [pickupIdx, setPickupIdx] = useState(0);
+  const [zoneIdx, setZoneIdx] = useState(0);
   const [address, setAddress] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [deliveryTime, setDeliveryTime] = useState('');
@@ -48,6 +58,9 @@ export default function CartDrawer() {
     return true;
   }
 
+  const deliveryFee = deliveryMethod === 'courier' ? DELIVERY_ZONES[zoneIdx].price : 0;
+  const grandTotal = total + deliveryFee;
+
   function buildPayload() {
     return {
       items: cart,
@@ -63,6 +76,8 @@ export default function CartDrawer() {
       cardMessage,
       comment,
       pickupAddress: deliveryMethod === 'self' ? PICKUP_LOCATIONS[pickupIdx].label : undefined,
+      deliveryZone: deliveryMethod === 'courier' ? DELIVERY_ZONES[zoneIdx].label : undefined,
+      deliveryFee: deliveryMethod === 'courier' ? DELIVERY_ZONES[zoneIdx].price : undefined,
     };
   }
 
@@ -76,8 +91,8 @@ export default function CartDrawer() {
   // every render) so createOrder/onApprove always see the latest total and
   // form fields instead of whatever was current when the button first
   // rendered.
-  const latestRef = useRef({ total, buildPayload, openWhatsAppWith });
-  latestRef.current = { total, buildPayload, openWhatsAppWith };
+  const latestRef = useRef({ grandTotal, buildPayload, openWhatsAppWith });
+  latestRef.current = { grandTotal, buildPayload, openWhatsAppWith };
 
   async function checkout() {
     if (cart.length === 0) return;
@@ -125,7 +140,7 @@ export default function CartDrawer() {
             const res = await fetch('/api/paypal/create-order', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ totalKzt: latestRef.current.total }),
+              body: JSON.stringify({ totalKzt: latestRef.current.grandTotal }),
             });
             const data = await res.json();
             if (!data.orderId) throw new Error('create_order_failed');
@@ -205,8 +220,18 @@ export default function CartDrawer() {
               </div>
 
               <div className="cart-total">
-                <span className="ct-label">Итого</span>
+                <span className="ct-label">Товары</span>
                 <span className="ct-value">{formatPrice(total)}</span>
+              </div>
+              {deliveryFee > 0 && (
+                <div className="cart-total">
+                  <span className="ct-label">Доставка ({DELIVERY_ZONES[zoneIdx].label})</span>
+                  <span className="ct-value">{formatPrice(deliveryFee)}</span>
+                </div>
+              )}
+              <div className="cart-total">
+                <span className="ct-label">Итого</span>
+                <span className="ct-value">{formatPrice(grandTotal)}</span>
               </div>
 
               <span className="field-label">Букет получит</span>
@@ -283,12 +308,26 @@ export default function CartDrawer() {
                 </button>
               </div>
               {deliveryMethod === 'courier' ? (
-                <textarea
-                  className="cart-address"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Адрес доставки, ориентир"
-                />
+                <>
+                  <select
+                    className="cart-input"
+                    style={{ marginTop: 8 }}
+                    value={zoneIdx}
+                    onChange={(e) => setZoneIdx(Number(e.target.value))}
+                  >
+                    {DELIVERY_ZONES.map((z, i) => (
+                      <option key={z.label} value={i}>
+                        {z.label} — {formatPrice(z.price)}
+                      </option>
+                    ))}
+                  </select>
+                  <textarea
+                    className="cart-address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Адрес доставки, ориентир"
+                  />
+                </>
               ) : (
                 <select
                   className="cart-input"
@@ -364,7 +403,7 @@ export default function CartDrawer() {
               {showPaypal && <div ref={paypalRef} style={{ marginTop: 10, minHeight: 44 }} />}
 
               <button className="btn btn-primary cart-checkout-btn" type="button" onClick={checkout} disabled={sending}>
-                {sending ? 'Отправляем…' : 'Оформить в WhatsApp'}
+                {sending ? 'Отправляем…' : `Оформить в WhatsApp — ${formatPrice(grandTotal)}`}
               </button>
             </>
           )}
