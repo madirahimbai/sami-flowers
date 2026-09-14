@@ -15,6 +15,9 @@ type CartContextValue = {
   closeCart: () => void;
   favorites: Set<string>;
   toggleFavorite: (id: string) => void;
+  isFavoritesOpen: boolean;
+  openFavorites: () => void;
+  closeFavorites: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -26,6 +29,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [isCartOpen, setCartOpen] = useState(false);
+  const [isFavoritesOpen, setFavoritesOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -96,6 +100,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     closeCart: () => setCartOpen(false),
     favorites,
     toggleFavorite,
+    isFavoritesOpen,
+    openFavorites: () => setFavoritesOpen(true),
+    closeFavorites: () => setFavoritesOpen(false),
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
