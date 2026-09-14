@@ -632,8 +632,12 @@
 
   /* Photo-forward grid shared by "included items" and "addons" — plain
      square photo + caption, mirroring how mateflowers.ru presents both. */
-  .pp-bento{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-  @media (max-width:600px){.pp-bento{grid-template-columns:repeat(2,1fr);}}
+  .pp-bento{
+    display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;
+    -webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;
+  }
+  .pp-bento > *{flex:0 0 108px;scroll-snap-align:start;}
+  @media (max-width:600px){.pp-bento > *{flex-basis:96px;}}
 
   .pp-bento-photo{display:flex;flex-direction:column;gap:8px;}
   .pp-bento-photo img,
