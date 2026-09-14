@@ -9,9 +9,17 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
   }
-  return NextResponse.next();
+
+  const res = NextResponse.next();
+  // robots.txt disallows crawling here, but a disallow alone doesn't stop a
+  // URL from being indexed if it's linked from elsewhere — this header is
+  // the actual noindex signal for admin/API responses.
+  if (req.nextUrl.pathname.startsWith('/admin') || req.nextUrl.pathname.startsWith('/api')) {
+    res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  }
+  return res;
 }
 
 export const config = {
-  matcher: ['/admin/dashboard/:path*'],
+  matcher: ['/admin/:path*', '/api/:path*'],
 };
