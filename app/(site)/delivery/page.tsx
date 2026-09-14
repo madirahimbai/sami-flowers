@@ -14,6 +14,15 @@ export const metadata: Metadata = {
     title: 'Доставка и оплата цветов в Павлодаре',
     description: DESCRIPTION,
     url: `${SITE_URL}/delivery`,
+    siteName: 'Sami Flowers',
+    locale: 'ru_RU',
+    type: 'website',
+    images: ['/opengraph-image'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Доставка и оплата цветов в Павлодаре',
+    description: DESCRIPTION,
   },
 };
 
