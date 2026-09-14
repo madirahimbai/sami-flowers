@@ -14,6 +14,15 @@ export const metadata: Metadata = {
     title: 'Контакты и магазины в Павлодаре',
     description: DESCRIPTION,
     url: `${SITE_URL}/contacts`,
+    siteName: 'Sami Flowers',
+    locale: 'ru_RU',
+    type: 'website',
+    images: ['/opengraph-image'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Контакты и магазины в Павлодаре',
+    description: DESCRIPTION,
   },
 };
 
