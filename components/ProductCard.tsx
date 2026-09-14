@@ -12,7 +12,7 @@ const SIZE_CHIPS = [
   { label: '3х', mult: 3 },
 ];
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
   const { addToCart, favorites, toggleFavorite } = useCart();
   const [mult, setMult] = useState(1);
   const [added, setAdded] = useState(false);
@@ -52,6 +52,7 @@ export default function ProductCard({ product }: { product: Product }) {
           <img
             src={product.image}
             alt={product.name}
+            loading={priority ? 'eager' : 'lazy'}
             style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
           />
         ) : (
