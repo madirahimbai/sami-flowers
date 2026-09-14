@@ -169,6 +169,13 @@ export async function resetAllOrderCounts(): Promise<void> {
   await pool().query('UPDATE products SET order_count = 0');
 }
 
+/** Overwrites just the photo columns — used by the one-time recompression
+ * cleanup so it doesn't disturb name/price/etc. via the general upsert. */
+export async function updateProductImages(id: string, image: string | null, images: string[]): Promise<void> {
+  await ensureSchema();
+  await pool().query('UPDATE products SET image = $1, images = $2 WHERE id = $3', [image, JSON.stringify(images), id]);
+}
+
 export async function deleteProduct(id: string): Promise<void> {
   await ensureSchema();
   await pool().query('DELETE FROM products WHERE id = $1', [id]);
