@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next';
 import { listProducts } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 const SITE_URL = 'https://www.samiflowers.kz';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
