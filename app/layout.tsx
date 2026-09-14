@@ -4,7 +4,7 @@ import './globals.css';
 const SITE_URL = 'https://www.samiflowers.kz';
 const SITE_NAME = 'Sami Flowers';
 const DESCRIPTION =
-  'Доставка цветов и букетов по Павлодару в день заказа. Каталог букетов и роз, самовывоз с Торайгырова и Амангельды, заказ в WhatsApp. Рейтинг 4,9 ★ на 2ГИС.';
+  'Быстрая доставка цветов и букетов по Павлодару в течение 60 минут. Каталог букетов и роз, самовывоз с Торайгырова и Амангельды, заказ в WhatsApp. Рейтинг 4,9 ★ на 2ГИС.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -23,6 +23,8 @@ export const metadata: Metadata = {
     'розы Павлодар',
     'купить розы Павлодар',
     'доставка роз Павлодар',
+    'быстрая доставка цветов Павлодар',
+    'цветы с доставкой Павлодар',
     'Sami Flowers',
   ],
   alternates: { canonical: '/' },
