@@ -4,28 +4,30 @@ import './globals.css';
 const SITE_URL = 'https://www.samiflowers.kz';
 const SITE_NAME = 'Sami Flowers';
 const DESCRIPTION =
-  'Доставка свежих цветов и букетов по Павлодару за 60 минут. Каталог букетов, подарки, самовывоз с Торайгырова и Амангельды, заказ в WhatsApp. Рейтинг 4,9 ★ на 2ГИС.';
+  'Доставка цветов и букетов по Павлодару в день заказа. Каталог букетов и роз, самовывоз с Торайгырова и Амангельды, заказ в WhatsApp. Рейтинг 4,9 ★ на 2ГИС.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Sami Flowers — доставка цветов в Павлодаре',
+    default: 'Доставка цветов в Павлодаре — купить букет | Sami Flowers',
     template: '%s — Sami Flowers',
   },
   description: DESCRIPTION,
   keywords: [
     'доставка цветов Павлодар',
-    'купить букет Павлодар',
+    'купить цветы Павлодар',
     'цветы Павлодар',
-    'заказать цветы Павлодар',
-    'флорист Павлодар',
-    'букет на заказ Павлодар',
-    'доставка цветов Казахстан',
+    'цветочный магазин Павлодар',
+    'заказать букет Павлодар',
+    'доставка букетов Павлодар',
+    'розы Павлодар',
+    'купить розы Павлодар',
+    'доставка роз Павлодар',
     'Sami Flowers',
   ],
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'Sami Flowers — доставка цветов в Павлодаре',
+    title: 'Доставка цветов в Павлодаре — купить букет | Sami Flowers',
     description: DESCRIPTION,
     url: SITE_URL,
     siteName: SITE_NAME,
@@ -34,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sami Flowers — доставка цветов в Павлодаре',
+    title: 'Доставка цветов в Павлодаре — купить букет | Sami Flowers',
     description: DESCRIPTION,
   },
   robots: {
@@ -44,35 +46,18 @@ export const metadata: Metadata = {
   },
 };
 
-const localBusinessSchema = {
+// Site-wide Organization entity. The two physical shops each get their own
+// Florist entity with a stable @id on /contacts, next to their visible
+// address/phone — see components rendered there. Keeping address data out
+// of this shared entity avoids the "one LocalBusiness, many addresses"
+// anti-pattern.
+const organizationSchema = {
   '@context': 'https://schema.org',
-  '@type': 'Florist',
-  name: 'Sami Flowers',
-  description: DESCRIPTION,
+  '@type': 'Organization',
+  name: SITE_NAME,
+  alternateName: 'Sami Flowers — Дарим счастливые моменты',
   url: SITE_URL,
-  image: `${SITE_URL}/logo.svg`,
-  telephone: ['+77761115319', '+77076828707'],
-  priceRange: '₸₸',
-  address: [
-    {
-      '@type': 'PostalAddress',
-      streetAddress: 'Торайгырова, 73',
-      addressLocality: 'Павлодар',
-      addressCountry: 'KZ',
-    },
-    {
-      '@type': 'PostalAddress',
-      streetAddress: 'Амангельды, 23',
-      addressLocality: 'Павлодар',
-      addressCountry: 'KZ',
-    },
-  ],
-  openingHoursSpecification: {
-    '@type': 'OpeningHoursSpecification',
-    dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-    opens: '08:00',
-    closes: '23:59',
-  },
+  logo: `${SITE_URL}/logo.svg`,
   aggregateRating: {
     '@type': 'AggregateRating',
     ratingValue: '4.9',
@@ -94,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script
           type="application/ld+json"
           // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
       </head>
       <body>{children}</body>
