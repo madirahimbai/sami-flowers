@@ -251,6 +251,32 @@
   section{scroll-margin-top:96px;}
 
   /* ---------- SECTION HEAD ---------- */
+  .breadcrumbs{padding:18px 0 0;}
+  .breadcrumbs ol{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0;}
+  .breadcrumbs li{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-muted);}
+  .breadcrumbs li:not(:last-child)::after{content:"/";margin-left:6px;color:var(--border);}
+  .breadcrumbs a{color:var(--text-muted);text-decoration:none;}
+  .breadcrumbs a:hover{color:var(--accent-strong);}
+  .breadcrumbs span[aria-current]{color:var(--text);font-weight:600;}
+
+  .info-page{padding-top:44px;padding-bottom:76px;}
+  .info-page h1{font-size:clamp(28px,3.6vw,42px);margin:14px 0 12px;}
+  .info-page .lede{color:var(--text-muted);font-size:15.5px;line-height:1.6;max-width:62ch;margin-bottom:8px;}
+  .info-page h2{font-size:22px;margin:38px 0 14px;}
+  .info-page h3{font-size:16px;margin:20px 0 8px;}
+  .info-page p{font-size:14.5px;line-height:1.65;color:var(--text);max-width:68ch;}
+  .info-page ul{margin:10px 0;padding-left:20px;}
+  .info-page li{font-size:14.5px;line-height:1.7;}
+  .info-table{width:100%;border-collapse:collapse;margin:18px 0;max-width:560px;}
+  .info-table th,.info-table td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);font-size:14px;}
+  .info-table th{color:var(--text-muted);font-weight:600;}
+  .info-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:18px 0;}
+  .info-card{border:1px solid var(--border);border-radius:16px;padding:20px;background:var(--surface);}
+  .info-card h3{margin-top:0;}
+  .info-card a{color:var(--accent-strong);text-decoration:none;font-weight:600;}
+  .info-card a:hover{text-decoration:underline;}
+  .info-card p{margin:4px 0;}
+
   .section{padding:76px 0;}
   .section-alt{background:var(--bg-alt);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
   .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:44px;}
