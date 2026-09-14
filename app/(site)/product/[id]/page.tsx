@@ -28,7 +28,10 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       title: displayTitle,
       description,
       url: `${SITE_URL}/product/${product.id}`,
-      images: imageUrl ? [{ url: imageUrl, width: 900, height: 900 }] : undefined,
+      siteName: 'Sami Flowers',
+      locale: 'ru_RU',
+      type: 'website',
+      images: imageUrl ? [{ url: imageUrl, width: 900, height: 900 }] : ['/opengraph-image'],
     },
     twitter: {
       card: 'summary_large_image',
