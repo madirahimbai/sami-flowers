@@ -170,6 +170,29 @@
   .mobile-overlay a:nth-child(4){transition-delay:.24s;}
   .mobile-overlay a:nth-child(5){transition-delay:.3s;}
   .mobile-overlay-close{position:absolute;top:26px;right:26px;}
+  .mobile-overlay-label{
+    font-family:"Manrope",sans-serif;font-size:12px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--text-muted);opacity:.8;margin-top:6px;
+  }
+
+  .contact-popover-wrap{position:relative;}
+  .contact-popover{
+    position:absolute;top:calc(100% + 10px);right:0;z-index:70;min-width:180px;
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:8px;display:flex;flex-direction:column;gap:2px;
+    box-shadow:0 20px 40px -20px hsla(var(--shadow-tint),.55);
+  }
+  .contact-popover-label{
+    font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--text-muted);padding:6px 10px 2px;
+  }
+  .contact-popover a{
+    display:block;padding:9px 10px;border-radius:10px;font-size:13.5px;font-weight:600;
+    color:var(--text);text-decoration:none;transition:background .2s ease;
+  }
+  .contact-popover a:hover{background:var(--surface-2);}
+
+  @media (max-width:640px){.nav-cart-btn{display:none;}}
 
   @media (max-width:860px){
     .nav-links,.nav-order-btn{display:none;}
