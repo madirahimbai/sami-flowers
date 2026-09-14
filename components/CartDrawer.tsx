@@ -82,7 +82,7 @@ export default function CartDrawer() {
   }
 
   function openWhatsAppWith(text: string) {
-    const targetPhone = deliveryMethod === 'self' ? PICKUP_LOCATIONS[pickupIdx].phone : PICKUP_LOCATIONS[0].phone;
+    const targetPhone = PICKUP_LOCATIONS[pickupIdx].phone;
     window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(text)}`, '_blank');
   }
 
@@ -307,7 +307,21 @@ export default function CartDrawer() {
                   Доставка
                 </button>
               </div>
-              {deliveryMethod === 'courier' ? (
+              <span className="field-label">
+                {deliveryMethod === 'self' ? 'Пункт самовывоза' : 'Куда отправить заказ (WhatsApp/филиал)'}
+              </span>
+              <select
+                className="cart-input"
+                value={pickupIdx}
+                onChange={(e) => setPickupIdx(Number(e.target.value))}
+              >
+                {PICKUP_LOCATIONS.map((p, i) => (
+                  <option key={p.label} value={i}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+              {deliveryMethod === 'courier' && (
                 <>
                   <select
                     className="cart-input"
@@ -328,19 +342,6 @@ export default function CartDrawer() {
                     placeholder="Адрес доставки, ориентир"
                   />
                 </>
-              ) : (
-                <select
-                  className="cart-input"
-                  style={{ marginTop: 8 }}
-                  value={pickupIdx}
-                  onChange={(e) => setPickupIdx(Number(e.target.value))}
-                >
-                  {PICKUP_LOCATIONS.map((p, i) => (
-                    <option key={p.label} value={i}>
-                      Самовывоз: Павлодар, {p.label}
-                    </option>
-                  ))}
-                </select>
               )}
               <div className="field-row" style={{ marginTop: 10 }}>
                 <input
