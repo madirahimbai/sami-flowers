@@ -3,11 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useCart } from '@/lib/cart-context';
-
-const BRANCHES = [
-  { label: 'Торайгырова, 73', phone: '77761115319' },
-  { label: 'Амангельды, 23', phone: '77076828707' },
-];
+import { PICKUP_LOCATIONS as BRANCHES } from '@/lib/delivery';
 
 export default function Header() {
   const { count, openCart } = useCart();
@@ -61,7 +57,13 @@ export default function Header() {
               <Link href="/#catalog">Каталог</Link>
             </li>
             <li>
-              <Link href="/#contacts">Контакты</Link>
+              <Link href="/roses">Розы</Link>
+            </li>
+            <li>
+              <Link href="/delivery">Доставка</Link>
+            </li>
+            <li>
+              <Link href="/contacts">Контакты</Link>
             </li>
           </ul>
           <div className="nav-cta" ref={contactRef}>
@@ -163,7 +165,13 @@ export default function Header() {
         <Link href="/#catalog" onClick={() => setMenuOpen(false)}>
           Каталог
         </Link>
-        <Link href="/#contacts" onClick={() => setMenuOpen(false)}>
+        <Link href="/roses" onClick={() => setMenuOpen(false)}>
+          Розы
+        </Link>
+        <Link href="/delivery" onClick={() => setMenuOpen(false)}>
+          Доставка
+        </Link>
+        <Link href="/contacts" onClick={() => setMenuOpen(false)}>
           Контакты
         </Link>
         <span className="mobile-overlay-label">Позвонить</span>
