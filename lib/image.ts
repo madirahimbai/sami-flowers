@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 
-const MAX_DIMENSION = 1200;
-const JPEG_QUALITY = 78;
+const MAX_DIMENSION = 900;
+const JPEG_QUALITY = 70;
 
 /** Resizes and re-encodes an uploaded photo to a size sensible for a
  * catalog/product page and returns it as a JPEG data: URI. A raw
