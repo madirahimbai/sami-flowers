@@ -13,7 +13,7 @@ export default function Footer() {
             <ul>
               <li>
                 <a href="https://go.2gis.com/blll3" target="_blank" rel="noreferrer">
-                  Торайгырова, 73, 1 этаж
+                  Торайгырова, 73
                 </a>{' '}
                 · <a href="tel:+77761115319">+7 776 111 53 19</a>
               </li>
