@@ -5,7 +5,7 @@ import { useCart } from '@/lib/cart-context';
 import { formatPrice } from '@/lib/types';
 
 const PICKUP_LOCATIONS = [
-  { label: 'Торайгырова, 73, 1 этаж', phone: '77761115319' },
+  { label: 'Торайгырова, 73', phone: '77761115319' },
   { label: 'Амангельды, 23', phone: '77076828707' },
 ];
 
