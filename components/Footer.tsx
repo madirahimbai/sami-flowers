@@ -6,7 +6,24 @@ export default function Footer() {
           <div className="foot-brand">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="foot-logo" src="/logo.svg" alt="Sami Flowers" />
-            <p>Мастерская букетов и доставка цветов по Павлодару. Собираем из свежих поставок, согласовываем по фото.</p>
+            <p>Дарим счастливые моменты — мастерская букетов и доставка цветов по Павлодару. Собираем из свежих поставок, согласовываем по фото.</p>
+          </div>
+          <div className="foot-col">
+            <h4>Разделы</h4>
+            <ul>
+              <li>
+                <a href="/#catalog">Каталог</a>
+              </li>
+              <li>
+                <a href="/roses">Розы</a>
+              </li>
+              <li>
+                <a href="/delivery">Доставка и оплата</a>
+              </li>
+              <li>
+                <a href="/contacts">Контакты</a>
+              </li>
+            </ul>
           </div>
           <div className="foot-col">
             <h4>Контакты</h4>
