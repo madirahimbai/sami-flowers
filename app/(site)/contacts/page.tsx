@@ -7,11 +7,11 @@ const DESCRIPTION =
   'Магазины цветов Sami Flowers в Павлодаре: Торайгырова, 73 и Амангельды, 23. Телефоны, режим работы, самовывоз и маршрут на карте.';
 
 export const metadata: Metadata = {
-  title: 'Контакты и магазины Sami Flowers в Павлодаре',
+  title: 'Контакты и магазины в Павлодаре',
   description: DESCRIPTION,
   alternates: { canonical: '/contacts' },
   openGraph: {
-    title: 'Контакты и магазины Sami Flowers в Павлодаре',
+    title: 'Контакты и магазины в Павлодаре',
     description: DESCRIPTION,
     url: `${SITE_URL}/contacts`,
   },
