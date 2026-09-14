@@ -18,6 +18,15 @@ export const metadata: Metadata = {
     title: 'Розы с доставкой в Павлодаре',
     description: DESCRIPTION,
     url: `${SITE_URL}/roses`,
+    siteName: 'Sami Flowers',
+    locale: 'ru_RU',
+    type: 'website',
+    images: ['/opengraph-image'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Розы с доставкой в Павлодаре',
+    description: DESCRIPTION,
   },
 };
 
