@@ -49,7 +49,7 @@ export function buildOrderText(body: OrderBody, items: OrderItem[], paymentNote?
     if (body.deliveryDate) lines.push(`Дата: ${body.deliveryDate}`);
     if (body.deliveryTime) lines.push(`Время: ${body.deliveryTime}`);
   } else {
-    lines.push(`Способ получения: самовывоз — ${body.pickupAddress || 'Торайгырова, 73, 1 этаж'}`);
+    lines.push(`Способ получения: самовывоз — ${body.pickupAddress || 'Торайгырова, 73'}`);
     if (body.deliveryDate) lines.push(`Дата: ${body.deliveryDate}`);
     if (body.deliveryTime) lines.push(`Время: ${body.deliveryTime}`);
   }
