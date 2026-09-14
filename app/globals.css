@@ -717,7 +717,7 @@
   .pp-mobile-label{display:block;font-size:10.5px;color:var(--text-muted);}
   .pp-mobile-price{display:block;font-family:"Fraunces",serif;font-size:17px;color:var(--accent-strong);}
   .pp-mobile-bar .btn{padding:12px 22px;}
-  @media (max-width:640px){.pp-mobile-bar{display:flex;}}
+  @media (max-width:640px){.pp-mobile-bar{display:flex;bottom:62px;}}
 
   .lightbox{
     position:fixed;inset:0;z-index:120;background:hsla(0,0%,0%,.92);
