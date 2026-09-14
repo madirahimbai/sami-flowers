@@ -1,3 +1,5 @@
+import { compressImage } from './image';
+
 /** Sends the order to the shop's Telegram chat via the Bot API — with the
  * bouquet's photo attached when one is available, so staff see the order
  * text and the picture together instead of having to open the site.
@@ -74,9 +76,7 @@ export async function downloadTelegramPhoto(token: string, fileId: string): Prom
     const download = await fetch(`https://api.telegram.org/file/bot${token}/${filePath}`);
     if (!download.ok) return null;
     const buf = Buffer.from(await download.arrayBuffer());
-    const ext = filePath.split('.').pop()?.toLowerCase();
-    const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
-    return `data:${mime};base64,${buf.toString('base64')}`;
+    return await compressImage(buf);
   } catch {
     return null;
   }
