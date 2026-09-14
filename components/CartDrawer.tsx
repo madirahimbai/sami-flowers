@@ -3,29 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useCart } from '@/lib/cart-context';
 import { formatPrice } from '@/lib/types';
-
-const PICKUP_LOCATIONS = [
-  { label: 'Торайгырова, 73', phone: '77761115319' },
-  { label: 'Амангельды, 23', phone: '77076828707' },
-];
-
-const KASPI_LINK = 'https://pay.kaspi.kz/pay/ucljnkfw';
-
-const DELIVERY_ZONES = [
-  { label: 'По городу', price: 1500 },
-  { label: 'Аксу', price: 6500 },
-  { label: 'Жетекши', price: 3000 },
-  { label: 'Кенжеколь', price: 2500 },
-  { label: 'Ленинский, Мойылды, Павлодарское', price: 3500 },
-  { label: 'Лесозавод, Аквилон, загород', price: 1500 },
-];
-
-// Hourly slots covering working hours 08:00–00:00 — used for both courier
-// delivery and pickup, since staff can commit to an hour at either.
-const DELIVERY_TIME_SLOTS = Array.from({ length: 16 }, (_, i) => {
-  const fmt = (h: number) => `${(h % 24).toString().padStart(2, '0')}:00`;
-  return `${fmt(8 + i)}–${fmt(9 + i)}`;
-});
+import { PICKUP_LOCATIONS, KASPI_LINK, DELIVERY_ZONES, DELIVERY_TIME_SLOTS } from '@/lib/delivery';
 
 export default function CartDrawer() {
   const { cart, removeFromCart, total, isCartOpen, closeCart, clearCart } = useCart();
