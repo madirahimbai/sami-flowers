@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   if (!product?.image) return new NextResponse(null, { status: 404 });
   const decoded = decodeDataUri(product.image);
   if (!decoded) return new NextResponse(null, { status: 404 });
-  return new NextResponse(decoded.buf, {
+  return new NextResponse(new Uint8Array(decoded.buf), {
     headers: {
       'Content-Type': decoded.mime,
       'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
