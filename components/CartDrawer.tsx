@@ -61,7 +61,7 @@ export default function CartDrawer() {
   const deliveryFee = deliveryMethod === 'courier' ? DELIVERY_ZONES[zoneIdx].price : 0;
   const grandTotal = total + deliveryFee;
 
-  function buildPayload() {
+  function buildPayload(branchIdx: number) {
     return {
       items: cart,
       recipientType,
@@ -75,15 +75,14 @@ export default function CartDrawer() {
       deliveryTime,
       cardMessage,
       comment,
-      pickupAddress: deliveryMethod === 'self' ? PICKUP_LOCATIONS[pickupIdx].label : undefined,
+      pickupAddress: deliveryMethod === 'self' ? PICKUP_LOCATIONS[branchIdx].label : undefined,
       deliveryZone: deliveryMethod === 'courier' ? DELIVERY_ZONES[zoneIdx].label : undefined,
       deliveryFee: deliveryMethod === 'courier' ? DELIVERY_ZONES[zoneIdx].price : undefined,
     };
   }
 
-  function openWhatsAppWith(text: string) {
-    const targetPhone = PICKUP_LOCATIONS[pickupIdx].phone;
-    window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(text)}`, '_blank');
+  function openWhatsAppWith(text: string, phone: string) {
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   }
 
   // The PayPal button below is mounted once and stays on screen while the
@@ -91,10 +90,10 @@ export default function CartDrawer() {
   // every render) so createOrder/onApprove always see the latest total and
   // form fields instead of whatever was current when the button first
   // rendered.
-  const latestRef = useRef({ grandTotal, buildPayload, openWhatsAppWith });
-  latestRef.current = { grandTotal, buildPayload, openWhatsAppWith };
+  const latestRef = useRef({ grandTotal, buildPayload, openWhatsAppWith, pickupIdx });
+  latestRef.current = { grandTotal, buildPayload, openWhatsAppWith, pickupIdx };
 
-  async function checkout() {
+  async function checkout(branchIdx: number) {
     if (cart.length === 0) return;
     if (!validateContact()) return;
     setSending(true);
@@ -103,7 +102,7 @@ export default function CartDrawer() {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildPayload()),
+        body: JSON.stringify(buildPayload(branchIdx)),
       });
       const data = await res.json();
       waText = data.message || '';
@@ -112,7 +111,7 @@ export default function CartDrawer() {
       // own Telegram-notify call failed
     }
     setSending(false);
-    if (waText) openWhatsAppWith(waText);
+    if (waText) openWhatsAppWith(waText, PICKUP_LOCATIONS[branchIdx].phone);
     clearCart();
     closeCart();
   }
@@ -149,14 +148,15 @@ export default function CartDrawer() {
           onApprove: async (data: { orderID: string }) => {
             setSending(true);
             try {
+              const branchIdx = latestRef.current.pickupIdx;
               const res = await fetch('/api/paypal/capture-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId: data.orderID, ...latestRef.current.buildPayload() }),
+                body: JSON.stringify({ orderId: data.orderID, ...latestRef.current.buildPayload(branchIdx) }),
               });
               const result = await res.json();
               if (result.ok) {
-                latestRef.current.openWhatsAppWith(result.message);
+                latestRef.current.openWhatsAppWith(result.message, PICKUP_LOCATIONS[branchIdx].phone);
                 clearCart();
                 closeCart();
               } else {
@@ -288,7 +288,7 @@ export default function CartDrawer() {
                   required
                 />
               </div>
-              {formError && <p className="cart-error">{formError}</p>}
+              <div className="cart-error-slot">{formError && <p className="cart-error">{formError}</p>}</div>
 
               <span className="field-label">Способ получения</span>
               <div className="delivery-toggle">
@@ -308,7 +308,7 @@ export default function CartDrawer() {
                 </button>
               </div>
               <span className="field-label">
-                {deliveryMethod === 'self' ? 'Пункт самовывоза' : 'Куда отправить заказ (WhatsApp/филиал)'}
+                {deliveryMethod === 'self' ? 'Пункт самовывоза' : 'Филиал (для Kaspi/PayPal — куда написать после оплаты)'}
               </span>
               <select
                 className="cart-input"
@@ -398,14 +398,26 @@ export default function CartDrawer() {
                 </button>
               </div>
               <p className="pp-demo-note" style={{ fontSize: 12, marginTop: 6 }}>
-                Kaspi: оплатите по ссылке, затем нажмите «Оформить в WhatsApp» ниже. PayPal: оплата картой сразу здесь
-                (списывается в долларах по курсу).
+                Kaspi: оплатите по ссылке, затем напишите в WhatsApp одной из кнопок ниже. PayPal: оплата картой сразу
+                здесь (списывается в долларах по курсу).
               </p>
               {showPaypal && <div ref={paypalRef} style={{ marginTop: 10, minHeight: 44 }} />}
 
-              <button className="btn btn-primary cart-checkout-btn" type="button" onClick={checkout} disabled={sending}>
-                {sending ? 'Отправляем…' : `Оформить в WhatsApp — ${formatPrice(grandTotal)}`}
-              </button>
+              <span className="field-label">Оформить заказ в WhatsApp — выберите филиал</span>
+              <div className="wa-branch-list">
+                {PICKUP_LOCATIONS.map((p, i) => (
+                  <button
+                    key={p.label}
+                    className="btn btn-primary wa-branch-btn"
+                    type="button"
+                    onClick={() => checkout(i)}
+                    disabled={sending}
+                  >
+                    <span className="wb-name">{sending ? 'Отправляем…' : p.label}</span>
+                    {!sending && <span className="wb-total">{formatPrice(grandTotal)}</span>}
+                  </button>
+                ))}
+              </div>
             </>
           )}
         </div>
