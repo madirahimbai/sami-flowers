@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Product, formatPrice } from '@/lib/types';
+import { Product, formatPrice, productDisplayTitle } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
 
 const SIZE_CHIPS = [
@@ -164,7 +164,7 @@ export default function ProductPageClient({
                     onClick={() => setActiveIdx(i)}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt="" />
+                    <img src={src} alt={`${product.name} — фото ${i + 1}`} loading="lazy" />
                   </button>
                 ))}
               </div>
@@ -206,7 +206,7 @@ export default function ProductPageClient({
 
           <div className="pp-info">
             {product.tag && <span className="card-tag" style={{ display: 'inline-flex', position: 'static' }}>{product.tag}</span>}
-            <h1>{product.name}</h1>
+            <h1>{productDisplayTitle(product)}</h1>
             <p className="pp-lede">{product.description || 'Свежий букет ручной сборки от Sami Flowers.'}</p>
             <div className="pp-price">{formatPrice(total)}</div>
             <span className="pp-bonus">
@@ -275,7 +275,7 @@ export default function ProductPageClient({
                       <div key={it.id} className="pp-bento-photo">
                         {it.image ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={it.image} alt="" />
+                          <img src={it.image} alt={it.name} loading="lazy" />
                         ) : (
                           <span className="pp-bento-photo-empty" />
                         )}
@@ -309,7 +309,7 @@ export default function ProductPageClient({
                       <span className="pp-addon-check">✓</span>
                       {a.image ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img className="pp-addon-img" src={a.image} alt="" />
+                        <img className="pp-addon-img" src={a.image} alt={a.name} loading="lazy" />
                       ) : (
                         <span className="pp-addon-img" />
                       )}
@@ -395,7 +395,7 @@ export default function ProductPageClient({
                 <Link key={r.id} href={`/product/${r.id}`} className="related-item">
                   {r.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.image} alt={r.name} />
+                    <img src={r.image} alt={r.name} loading="lazy" />
                   ) : (
                     <div style={{ width: '100%', height: 140, borderRadius: 16, background: 'var(--surface-2)' }} />
                   )}
