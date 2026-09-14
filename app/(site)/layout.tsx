@@ -2,6 +2,8 @@ import { CartProvider } from '@/lib/cart-context';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
+import FavoritesDrawer from '@/components/FavoritesDrawer';
+import MobileTabBar from '@/components/MobileTabBar';
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,6 +12,8 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       {children}
       <Footer />
       <CartDrawer />
+      <FavoritesDrawer />
+      <MobileTabBar />
     </CartProvider>
   );
 }
