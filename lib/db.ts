@@ -83,14 +83,50 @@ export function ensureSchema(): Promise<void> {
 // Pulling `images` (up to 5 base64 photos per row) on every listing query
 // multiplies bytes read from Postgres and sent over the wire for nothing,
 // which matters once real concurrent traffic hits the catalog page.
-const LIST_COLUMNS = 'id, name, number, price, description, image, category, tag, available, sort_order, order_count';
+//
+// The cover `image` itself is also NOT pulled as raw base64 here — with the
+// full catalog (~100 products) rendered on one page, embedding every cover
+// photo inline made the homepage's RSC payload several MB even with
+// compressed photos, since Next.js serializes whatever a Server Component
+// passes as props to a Client Component. Instead this returns a fetchable
+// `/api/products/{id}/image` URL, which an <img> tag treats exactly like a
+// data: URI — same rendering, but the bytes ship as a separate, cacheable,
+// actually-lazy-loadable request instead of bloating the initial HTML.
+const LIST_COLUMNS = 'id, name, number, price, description, (image IS NOT NULL) as has_image, category, tag, available, sort_order, order_count';
+
+type ListRow = {
+  id: string;
+  name: string;
+  number: number | null;
+  price: number;
+  description: string | null;
+  has_image: boolean;
+  category: Product['category'];
+  tag: string | null;
+  available: boolean;
+  sort_order: number;
+  order_count: number;
+};
 
 export async function listProducts(category?: 'bouquet' | 'gift' | 'addon' | 'included'): Promise<Product[]> {
   await ensureSchema();
   const result = category
-    ? await pool().query<Product>(`SELECT ${LIST_COLUMNS} FROM products WHERE category = $1 ORDER BY price ASC, created_at ASC`, [category])
-    : await pool().query<Product>(`SELECT ${LIST_COLUMNS} FROM products ORDER BY price ASC, created_at ASC`);
-  return result.rows.map((r) => ({ ...r, images: [] }));
+    ? await pool().query<ListRow>(`SELECT ${LIST_COLUMNS} FROM products WHERE category = $1 ORDER BY price ASC, created_at ASC`, [category])
+    : await pool().query<ListRow>(`SELECT ${LIST_COLUMNS} FROM products ORDER BY price ASC, created_at ASC`);
+  return result.rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    number: r.number,
+    price: r.price,
+    description: r.description,
+    image: r.has_image ? `/api/products/${r.id}/image` : null,
+    images: [],
+    category: r.category,
+    tag: r.tag,
+    available: r.available,
+    sort_order: r.sort_order,
+    order_count: r.order_count,
+  }));
 }
 
 /** Same as listProducts but includes the full `images` gallery array — for
