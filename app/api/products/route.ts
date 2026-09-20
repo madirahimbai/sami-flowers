@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listProductsFull, upsertProduct } from '@/lib/db';
+import { listProducts, listProductsFull, upsertProduct } from '@/lib/db';
 import { isAdminFromCookies } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// Only the admin dashboard calls this — it needs every product's full
-// photo gallery to manage them, unlike the lighter storefront queries.
+// The admin dashboard needs every product's full photo gallery to manage
+// them — but this endpoint is also called by the public FavoritesDrawer,
+// which only needs enough to render cards. Serving listProductsFull() to
+// every visitor meant downloading the entire catalog's base64 photos (many
+// MB) just to open the favorites list — branch on auth so the public case
+// gets the same lightweight, URL-based images as the rest of the storefront.
 export async function GET() {
-  const products = await listProductsFull();
+  const isAdmin = await isAdminFromCookies();
+  const products = isAdmin ? await listProductsFull() : await listProducts();
   return NextResponse.json({ products });
 }
 
