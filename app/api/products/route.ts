@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listProducts, listProductsFull, upsertProduct } from '@/lib/db';
+import { listProducts, listProductsFull, upsertProduct, sanitizeVariants } from '@/lib/db';
 import { isAdminFromCookies } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
       body.category === 'gift' || body.category === 'addon' || body.category === 'included'
         ? body.category
         : 'bouquet',
+    category_tags: Array.isArray(body.category_tags) ? body.category_tags.map(String) : [],
+    variants: sanitizeVariants(body.variants),
     tag: body.tag ?? null,
     available: body.available !== false,
   });
