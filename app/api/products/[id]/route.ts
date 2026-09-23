@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProduct, upsertProduct, deleteProduct } from '@/lib/db';
+import { getProduct, upsertProduct, deleteProduct, sanitizeVariants } from '@/lib/db';
 import { isAdminFromCookies } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +26,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     image: body.image !== undefined ? body.image : existing.image,
     images: Array.isArray(body.images) ? body.images.slice(0, 5).map(String) : existing.images,
     category: body.category ?? existing.category,
+    category_tags: Array.isArray(body.category_tags) ? body.category_tags.map(String) : existing.category_tags,
+    variants: body.variants !== undefined ? sanitizeVariants(body.variants) : existing.variants,
     tag: body.tag !== undefined ? body.tag : existing.tag,
     available: body.available !== undefined ? body.available : existing.available,
     sort_order: existing.sort_order,
