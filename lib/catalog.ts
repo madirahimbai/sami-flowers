@@ -78,17 +78,12 @@ export function isAssorted(p: NameDesc): boolean {
   return !isRose(p) && distinctFlowerTypeCount(p) >= 2;
 }
 
-export type CatalogFilterId = 'all' | 'roses' | 'bush_roses' | 'mono' | 'assorted' | 'exotic' | 'box';
-
-export const CATALOG_FILTERS: { id: CatalogFilterId; label: string; test: (p: Product) => boolean }[] = [
-  { id: 'all', label: 'Все букеты', test: () => true },
-  { id: 'roses', label: 'Розы', test: isRose },
-  { id: 'bush_roses', label: 'Кустовые розы', test: isBushRose },
-  { id: 'mono', label: 'Монобукеты', test: isMono },
-  { id: 'assorted', label: 'Сборные букеты', test: isAssorted },
-  { id: 'exotic', label: 'Экзотика', test: isExotic },
-  { id: 'box', label: 'Цветы в коробках', test: isBoxArrangement },
-];
+// The catalog tabs themselves (Розы, Кустовые розы, ...) are now admin-owned
+// rows in the `categories` table, assigned per product via `category_tags`
+// — see app/api/admin/migrate-categories, which seeds that table using
+// these same functions as the starting assignment. The functions stay
+// exported so that one-time seed can call them; CatalogClient no longer
+// filters by running them live.
 
 const COLOR_KEYWORDS: { id: string; label: string; hex: string; keywords: string[] }[] = [
   { id: 'red', label: 'Красный', hex: '#c0392b', keywords: ['красн'] },
