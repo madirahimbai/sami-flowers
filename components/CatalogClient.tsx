@@ -64,10 +64,10 @@ export default function CatalogClient({ products }: { products: Product[] }) {
   }
 
   return (
-    <section className="section" id="catalog">
+    <section className="section" id="catalog" style={{ paddingTop: 24 }}>
       <div className="wrap">
         <div className="section-head">
-          <h2>Каталог</h2>
+          <h1>Каталог</h1>
         </div>
 
         {gifts.length > 0 && (
