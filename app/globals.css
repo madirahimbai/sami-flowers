@@ -201,6 +201,15 @@
 
   /* ---------- HERO ---------- */
   .hero{padding:56px 0 40px;}
+  /* Trims the first screen on mobile so the catalog grid is reachable with
+     less scrolling — the h1/lede/buttons content itself is unchanged. */
+  .hero-compact{padding-top:20px;padding-bottom:28px;}
+  @media (max-width:640px){
+    .hero-compact{padding-top:14px;padding-bottom:20px;}
+    .hero-compact .hero-copy p.lede{margin-top:14px;font-size:14.5px;}
+    .hero-compact .hero-actions{margin-top:18px;gap:10px;}
+    .hero-compact .eyebrow{margin-bottom:10px;}
+  }
   .hero-grid{
     display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;
   }
