@@ -183,10 +183,16 @@ export default function CartDrawer() {
               <div>
                 {cart.map((item, idx) => (
                   <div className="cart-item" key={idx}>
-                    <div>
+                    {item.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img className="ci-photo" src={item.image} alt={item.name} loading="lazy" />
+                    ) : (
+                      <div className="ci-photo ci-photo-empty" />
+                    )}
+                    <div className="ci-main">
                       <div className="ci-name">{item.name}</div>
                       <div className="ci-meta">
-                        {item.sizeLabel} · {item.qty} шт
+                        {item.sizeLabel} · {formatPrice(item.price)} за шт · {item.qty} шт
                       </div>
                       <button className="ci-remove" type="button" onClick={() => removeFromCart(idx)}>
                         Убрать
