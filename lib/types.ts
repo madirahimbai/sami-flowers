@@ -1,16 +1,9 @@
-export type Product = {
-  id: string;
-  name: string;
-  number: number | null;
-  price: number;
-  description: string | null;
-  image: string | null;
-  images: string[];
-  category: 'bouquet' | 'gift' | 'addon' | 'included';
-  tag: string | null;
-  available: boolean;
-  order_count?: number;
-};
+// Re-exported (type-only, so none of lib/db.ts's server-only `pg` runtime
+// code reaches the client bundle) rather than duplicated — this used to be
+// its own copy of the shape and drifted out of sync when db.ts gained new
+// columns.
+import type { Product, ProductVariant, Category } from './db';
+export type { Product, ProductVariant, Category };
 
 export type CartItem = {
   id: string;
