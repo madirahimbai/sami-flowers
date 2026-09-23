@@ -20,16 +20,33 @@ function photoCaption(p: Pick<Product, 'name' | 'description'>): string | null {
 export default function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
   const { addToCart, favorites, toggleFavorite } = useCart();
   const [added, setAdded] = useState(false);
+  const availableVariants = product.variants.filter((v) => v.available);
+  const [selectedVariant, setSelectedVariant] = useState(availableVariants[0]?.label ?? null);
   const isFav = favorites.has(product.id);
   const caption = photoCaption(product);
+  const variant = availableVariants.find((v) => v.label === selectedVariant) ?? null;
+  const price = variant ? variant.price : product.price;
 
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
     if (!product.available) return;
-    addToCart({ id: product.id, name: product.name, price: product.price, sizeLabel: 'Стандарт', qty: 1, image: product.image });
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price,
+      sizeLabel: variant ? variant.label : 'Стандарт',
+      qty: 1,
+      image: product.image,
+    });
     setAdded(true);
     setTimeout(() => setAdded(false), 700);
+  }
+
+  function selectVariant(e: React.MouseEvent, label: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedVariant(label);
   }
 
   return (
@@ -71,6 +88,20 @@ export default function ProductCard({ product, priority = false }: { product: Pr
       <div className="card-body">
         {caption && <span className="card-caption">{caption}</span>}
         <h3>{product.name}</h3>
+        {availableVariants.length > 0 && (
+          <div className="card-variants">
+            {availableVariants.map((v) => (
+              <button
+                key={v.label}
+                type="button"
+                className={`card-variant-pill ${selectedVariant === v.label ? 'is-active' : ''}`}
+                onClick={(e) => selectVariant(e, v.label)}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="card-foot">
           <button
             className={`card-buy-btn ${added ? 'is-added' : ''}`}
@@ -78,7 +109,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
             disabled={!product.available}
             onClick={handleAdd}
           >
-            {!product.available ? 'Нет в наличии' : added ? 'Добавлено' : `В корзину · ${formatPrice(product.price)}`}
+            {!product.available ? 'Нет в наличии' : added ? 'Добавлено' : `В корзину · ${formatPrice(price)}`}
           </button>
         </div>
       </div>
