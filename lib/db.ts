@@ -244,6 +244,13 @@ export async function updateProductImages(id: string, image: string | null, imag
   await pool().query('UPDATE products SET image = $1, images = $2 WHERE id = $3', [image, JSON.stringify(images), id]);
 }
 
+/** Overwrites just name + article number — used by the one-time
+ * name/article migration so it doesn't disturb photos/price/etc. */
+export async function updateProductNaming(id: string, name: string, number: number): Promise<void> {
+  await ensureSchema();
+  await pool().query('UPDATE products SET name = $1, number = $2 WHERE id = $3', [name, number, id]);
+}
+
 export async function deleteProduct(id: string): Promise<void> {
   await ensureSchema();
   await pool().query('DELETE FROM products WHERE id = $1', [id]);
