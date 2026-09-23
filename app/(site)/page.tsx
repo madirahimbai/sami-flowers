@@ -1,15 +1,15 @@
-import { listProducts } from '@/lib/db';
+import { listProducts, listCategories } from '@/lib/db';
 import CatalogClient from '@/components/CatalogClient';
 import { WORKING_HOURS } from '@/lib/delivery';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const products = await listProducts();
+  const [products, categories] = await Promise.all([listProducts(), listCategories()]);
 
   return (
     <main id="top">
-      <CatalogClient products={products} />
+      <CatalogClient products={products} categories={categories} />
 
       <section className="section" style={{ paddingTop: 0 }}>
         <div className="wrap info-page" style={{ paddingTop: 0 }}>
