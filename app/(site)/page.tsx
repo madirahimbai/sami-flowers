@@ -9,32 +9,6 @@ export default async function HomePage() {
 
   return (
     <main id="top">
-      <section className="hero hero-compact wrap">
-        <div className="hero-grid" style={{ gridTemplateColumns: '1fr' }}>
-          <div className="hero-copy">
-            <span className="eyebrow">Доставка цветов · Павлодар</span>
-            <h1>Доставка цветов в Павлодаре</h1>
-            <p className="lede">
-              Дарим счастливые моменты — свежие букеты и розы из мастерских на Торайгырова и Амангельды. Доставка
-              по Павлодару в течение 60 минут или самовывоз в день заказа, фото букета перед отправкой в WhatsApp.
-            </p>
-            <div className="hero-actions">
-              <a className="btn btn-primary" href="#catalog">
-                Выбрать букет
-              </a>
-              <a
-                className="btn btn-ghost"
-                href="https://wa.me/77761115319?text=Здравствуйте!%20Хочу%20заказать%20букет"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Написать в WhatsApp
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <CatalogClient products={products} />
 
       <section className="section" style={{ paddingTop: 0 }}>
