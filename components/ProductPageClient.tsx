@@ -5,13 +5,6 @@ import { useState } from 'react';
 import { Product, formatPrice, productDisplayTitle } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
 
-const SIZE_CHIPS = [
-  { label: 'Стандарт', mult: 1 },
-  { label: '1.5х', mult: 1.5 },
-  { label: '2х', mult: 2 },
-  { label: '3х', mult: 3 },
-];
-
 const WRAP_COLORS = [
   { name: 'Крафт', hex: '#b98a5e' },
   { name: 'Белый', hex: '#f6f2ea' },
@@ -94,7 +87,6 @@ export default function ProductPageClient({
   included: Product[];
 }) {
   const { addToCart, openCart } = useCart();
-  const [mult, setMult] = useState(1);
   const [wrapColor, setWrapColor] = useState(WRAP_COLORS[0].name);
   const [qty, setQty] = useState(1);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -102,11 +94,11 @@ export default function ProductPageClient({
   const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set());
 
   const images = product.images && product.images.length > 0 ? product.images : product.image ? [product.image] : [];
-  const unitPrice = Math.round(product.price * mult);
+  const unitPrice = product.price;
   const addonsTotal = addons.filter((a) => selectedAddons.has(a.id)).reduce((sum, a) => sum + a.price, 0);
   const total = unitPrice * qty + addonsTotal;
   const bonusAmount = Math.round(total * 0.05);
-  const sizeLabel = SIZE_CHIPS.find((c) => c.mult === mult)?.label ?? 'Стандарт';
+  const sizeLabel = `упаковка ${wrapColor}`;
 
   function prevImage() {
     setActiveIdx((i) => (i - 1 + images.length) % images.length);
@@ -128,7 +120,7 @@ export default function ProductPageClient({
       id: product.id,
       name: product.name,
       price: unitPrice,
-      sizeLabel: `${sizeLabel} · упаковка ${wrapColor}`,
+      sizeLabel,
       qty,
       image: images[0] ?? product.image,
     });
@@ -207,6 +199,7 @@ export default function ProductPageClient({
           <div className="pp-info">
             {product.tag && <span className="card-tag" style={{ display: 'inline-flex', position: 'static' }}>{product.tag}</span>}
             <h1>{productDisplayTitle(product)}</h1>
+            {product.number !== null && <span className="pp-article">Артикул {product.number}</span>}
             <p className="pp-lede">{product.description || 'Свежий букет ручной сборки от Sami Flowers.'}</p>
             <div className="pp-price">{formatPrice(total)}</div>
             <span className="pp-bonus">
@@ -241,30 +234,6 @@ export default function ProductPageClient({
             <div className="pp-section">
               <h4>Состав</h4>
               <p>{product.description || 'Состав уточняйте у флориста — сезонный набор цветов может отличаться.'}</p>
-            </div>
-
-            <div className="pp-section">
-              <h4>Размеры готового букета</h4>
-              <p className="pp-demo-note">
-                Высота и диаметр уточним при сборке букета — зависят от сезонной формы цветов (демонстрационное
-                поле).
-              </p>
-            </div>
-
-            <div className="pp-section">
-              <h4>Размер букета</h4>
-              <div className="size-chips">
-                {SIZE_CHIPS.map((c) => (
-                  <button
-                    key={c.label}
-                    type="button"
-                    className={`size-chip ${mult === c.mult ? 'is-active' : ''}`}
-                    onClick={() => setMult(c.mult)}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <div className="pp-section">
@@ -372,8 +341,8 @@ export default function ProductPageClient({
               <details className="pp-acc">
                 <summary>Оплата</summary>
                 <div>
-                  Наличными или переводом курьеру при получении, либо по реквизитам заранее — способ уточним в
-                  переписке. <span className="pp-demo-tag">демо</span>
+                  Kaspi Gold по ссылке, картой через PayPal (списывается в долларах по курсу) или наличными
+                  курьеру при получении — выбирается при оформлении заказа.
                 </div>
               </details>
               <details className="pp-acc">
