@@ -1,15 +1,15 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Product, formatPrice } from '@/lib/types';
-import { CATALOG_FILTERS, CATALOG_COLORS, CatalogFilterId, productColors } from '@/lib/catalog';
+import { Product, Category, formatPrice } from '@/lib/types';
+import { CATALOG_COLORS, productColors } from '@/lib/catalog';
 import ProductCard from './ProductCard';
 
 type SortId = 'default' | 'price_asc' | 'price_desc' | 'new' | 'popular';
 
-export default function CatalogClient({ products }: { products: Product[] }) {
+export default function CatalogClient({ products, categories }: { products: Product[]; categories: Category[] }) {
   const [panel, setPanel] = useState<'bouquets' | 'gifts'>('bouquets');
-  const [activeFilter, setActiveFilter] = useState<CatalogFilterId>('all');
+  const [activeFilter, setActiveFilter] = useState<string>('all');
   const [sort, setSort] = useState<SortId>('default');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [onlyAvailable, setOnlyAvailable] = useState(true);
@@ -31,15 +31,14 @@ export default function CatalogClient({ products }: { products: Product[] }) {
   }, [bouquets]);
 
   const visibleCategoryTabs = useMemo(
-    () => CATALOG_FILTERS.filter((f) => f.id === 'all' || bouquets.some((p) => p.available && f.test(p))),
-    [bouquets]
+    () => categories.filter((c) => bouquets.some((p) => p.available && p.category_tags?.includes(c.id))),
+    [bouquets, categories]
   );
 
   const filtered = useMemo(() => {
     let list = bouquets;
     if (onlyAvailable) list = list.filter((p) => p.available);
-    const catFilter = CATALOG_FILTERS.find((f) => f.id === activeFilter);
-    if (catFilter && catFilter.id !== 'all') list = list.filter(catFilter.test);
+    if (activeFilter !== 'all') list = list.filter((p) => p.category_tags?.includes(activeFilter));
     if (selectedColors.size > 0) list = list.filter((p) => productColors(p).some((c) => selectedColors.has(c)));
     if (priceMax !== null) list = list.filter((p) => p.price <= priceMax);
 
@@ -87,13 +86,19 @@ export default function CatalogClient({ products }: { products: Product[] }) {
         {panel === 'bouquets' && (
           <div className="catalog-toolbar">
             <div className="pill-tabs" role="tablist">
-              {visibleCategoryTabs.map((f) => (
+              <button
+                className={`pill-tab ${activeFilter === 'all' ? 'is-active' : ''}`}
+                onClick={() => setActiveFilter('all')}
+              >
+                Все букеты
+              </button>
+              {visibleCategoryTabs.map((c) => (
                 <button
-                  key={f.id}
-                  className={`pill-tab ${activeFilter === f.id ? 'is-active' : ''}`}
-                  onClick={() => setActiveFilter(f.id)}
+                  key={c.id}
+                  className={`pill-tab ${activeFilter === c.id ? 'is-active' : ''}`}
+                  onClick={() => setActiveFilter(c.id)}
                 >
-                  {f.label}
+                  {c.label}
                 </button>
               ))}
             </div>
