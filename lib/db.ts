@@ -73,9 +73,41 @@ export function ensureSchema(): Promise<void> {
       .then(() =>
         pool().query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS order_count INTEGER NOT NULL DEFAULT 0`)
       )
+      .then(() =>
+        // Tiny key-value table backing /api/monitor's health checks — lets it
+        // tell "still broken" apart from "just broke" so it only pages once
+        // per state change instead of every run.
+        pool().query(`
+          CREATE TABLE IF NOT EXISTS monitor_state (
+            check_name TEXT PRIMARY KEY,
+            ok BOOLEAN NOT NULL,
+            detail TEXT,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+          )
+        `)
+      )
       .then(() => undefined);
   }
   return schemaReady;
+}
+
+export type MonitorCheckName = 'site' | 'telegram_token' | 'telegram_delivery';
+
+/** Null means "no prior run" — the caller uses that to skip alerting on the
+ * very first check instead of treating it as a fake state change. */
+export async function getMonitorState(name: MonitorCheckName): Promise<boolean | null> {
+  await ensureSchema();
+  const result = await pool().query<{ ok: boolean }>('SELECT ok FROM monitor_state WHERE check_name = $1', [name]);
+  return result.rows[0]?.ok ?? null;
+}
+
+export async function setMonitorState(name: MonitorCheckName, ok: boolean, detail: string | null): Promise<void> {
+  await ensureSchema();
+  await pool().query(
+    `INSERT INTO monitor_state (check_name, ok, detail, updated_at) VALUES ($1, $2, $3, now())
+     ON CONFLICT (check_name) DO UPDATE SET ok = $2, detail = $3, updated_at = now()`,
+    [name, ok, detail]
+  );
 }
 
 // Storefront listings (catalog grid, related bouquets, addon/included-item
