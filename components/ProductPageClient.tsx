@@ -87,6 +87,8 @@ export default function ProductPageClient({
   included: Product[];
 }) {
   const { addToCart, openCart } = useCart();
+  const availableVariants = product.variants.filter((v) => v.available);
+  const [selectedVariant, setSelectedVariant] = useState(availableVariants[0]?.label ?? null);
   const [wrapColor, setWrapColor] = useState(WRAP_COLORS[0].name);
   const [qty, setQty] = useState(1);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -94,11 +96,12 @@ export default function ProductPageClient({
   const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set());
 
   const images = product.images && product.images.length > 0 ? product.images : product.image ? [product.image] : [];
-  const unitPrice = product.price;
+  const variant = availableVariants.find((v) => v.label === selectedVariant) ?? null;
+  const unitPrice = variant ? variant.price : product.price;
   const addonsTotal = addons.filter((a) => selectedAddons.has(a.id)).reduce((sum, a) => sum + a.price, 0);
   const total = unitPrice * qty + addonsTotal;
   const bonusAmount = Math.round(total * 0.05);
-  const sizeLabel = `упаковка ${wrapColor}`;
+  const sizeLabel = variant ? `${variant.label}, упаковка ${wrapColor}` : `упаковка ${wrapColor}`;
 
   function prevImage() {
     setActiveIdx((i) => (i - 1 + images.length) % images.length);
@@ -286,6 +289,25 @@ export default function ProductPageClient({
                         <span className="pp-addon-name">{a.name}</span>
                         <span className="pp-addon-price">+{formatPrice(a.price)}</span>
                       </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {availableVariants.length > 0 && (
+              <div className="pp-section">
+                <h4>Количество</h4>
+                <div className="pp-variant-row">
+                  {availableVariants.map((v) => (
+                    <button
+                      key={v.label}
+                      type="button"
+                      className={`pp-variant-pill ${selectedVariant === v.label ? 'is-active' : ''}`}
+                      onClick={() => setSelectedVariant(v.label)}
+                    >
+                      <span className="pp-variant-label">{v.label}</span>
+                      <span className="pp-variant-price">{formatPrice(v.price)}</span>
                     </button>
                   ))}
                 </div>
