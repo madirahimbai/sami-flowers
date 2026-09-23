@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Product } from '@/lib/types';
+import { Product, Category, ProductVariant } from '@/lib/types';
 
 function emptyProduct(category: 'bouquet' | 'gift' | 'addon' | 'included'): Product {
   return {
@@ -14,20 +14,118 @@ function emptyProduct(category: 'bouquet' | 'gift' | 'addon' | 'included'): Prod
     image: null,
     images: [],
     category,
+    category_tags: [],
+    variants: [],
     tag: null,
     available: true,
+    sort_order: 0,
+    order_count: 0,
   };
 }
 
 const MAX_IMAGES = 5;
 
+const TRANSLIT: Record<string, string> = {
+  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i',
+  й: 'i', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't',
+  у: 'u', ф: 'f', х: 'h', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '',
+  э: 'e', ю: 'yu', я: 'ya',
+};
+
+function slugify(label: string): string {
+  const base = label
+    .toLowerCase()
+    .split('')
+    .map((ch) => TRANSLIT[ch] ?? ch)
+    .join('')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return base || `cat_${Date.now()}`;
+}
+
+function CategoriesPanel({
+  categories,
+  onChange,
+}: {
+  categories: Category[];
+  onChange: (categories: Category[]) => void;
+}) {
+  const [label, setLabel] = useState('');
+  const [status, setStatus] = useState('');
+
+  async function addCategory() {
+    const trimmed = label.trim();
+    if (!trimmed) return;
+    const id = slugify(trimmed);
+    const sort_order = categories.length ? Math.max(...categories.map((c) => c.sort_order)) + 1 : 1;
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, label: trimmed, sort_order }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'save_failed');
+      const others = categories.filter((c) => c.id !== id);
+      onChange([...others, data.category].sort((a, b) => a.sort_order - b.sort_order));
+      setLabel('');
+      setStatus('');
+    } catch {
+      setStatus('Не удалось сохранить категорию');
+    }
+  }
+
+  async function removeCategory(id: string) {
+    if (!confirm('Удалить категорию? Она пропадёт из фильтров каталога (у товаров тег останется, но не будет виден).')) return;
+    try {
+      const res = await fetch(`/api/categories/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('delete_failed');
+      onChange(categories.filter((c) => c.id !== id));
+    } catch {
+      setStatus('Не удалось удалить категорию');
+    }
+  }
+
+  return (
+    <div className="categories-panel">
+      <h2>Вкладки каталога (категории)</h2>
+      <div className="categories-panel-list">
+        {categories.length === 0 && <span className="ar-tag-empty">Категорий пока нет</span>}
+        {categories.map((c) => (
+          <span className="category-chip" key={c.id}>
+            {c.label}
+            <button type="button" onClick={() => removeCategory(c.id)} aria-label="Удалить">
+              ×
+            </button>
+          </span>
+        ))}
+      </div>
+      <div className="categories-panel-add">
+        <input
+          className="cart-input"
+          placeholder="Например: Розы, Кустовые розы"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addCategory()}
+        />
+        <button type="button" className="btn btn-primary" onClick={addCategory}>
+          + Добавить категорию
+        </button>
+      </div>
+      {status && <div className="admin-status is-error">{status}</div>}
+    </div>
+  );
+}
+
 function ProductRow({
   product,
+  categories,
   onSaved,
   onDeleted,
   isNew,
 }: {
   product: Product;
+  categories: Category[];
   onSaved: (p: Product) => void;
   onDeleted: (id: string) => void;
   isNew?: boolean;
@@ -35,6 +133,8 @@ function ProductRow({
   const [draft, setDraft] = useState<Product>(() => ({
     ...product,
     images: product.images && product.images.length > 0 ? product.images : product.image ? [product.image] : [],
+    category_tags: product.category_tags ?? [],
+    variants: product.variants ?? [],
   }));
   const [status, setStatus] = useState<'idle' | 'saving' | 'ok' | 'error'>('idle');
   const [uploading, setUploading] = useState(false);
@@ -42,6 +142,33 @@ function ProductRow({
 
   function update<K extends keyof Product>(key: K, value: Product[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
+    setStatus('idle');
+  }
+
+  function toggleTag(id: string) {
+    setDraft((d) => {
+      const tags = d.category_tags ?? [];
+      const category_tags = tags.includes(id) ? tags.filter((t) => t !== id) : [...tags, id];
+      return { ...d, category_tags };
+    });
+    setStatus('idle');
+  }
+
+  function updateVariant(idx: number, patch: Partial<ProductVariant>) {
+    setDraft((d) => {
+      const variants = (d.variants ?? []).map((v, i) => (i === idx ? { ...v, ...patch } : v));
+      return { ...d, variants };
+    });
+    setStatus('idle');
+  }
+
+  function addVariant() {
+    setDraft((d) => ({ ...d, variants: [...(d.variants ?? []), { label: '', price: d.price || 0, available: true }] }));
+    setStatus('idle');
+  }
+
+  function removeVariant(idx: number) {
+    setDraft((d) => ({ ...d, variants: (d.variants ?? []).filter((_, i) => i !== idx) }));
     setStatus('idle');
   }
 
@@ -215,6 +342,60 @@ function ProductRow({
             <option value="included">В комплекте (открытка, подкормка и т.д.)</option>
           </select>
         </div>
+
+        <span className="ar-field-label">Вкладки каталога</span>
+        {categories.length === 0 ? (
+          <span className="ar-tag-empty">Сначала добавьте категории выше</span>
+        ) : (
+          <div className="ar-tags">
+            {categories.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className={`ar-tag-chip ${(draft.category_tags ?? []).includes(c.id) ? 'is-active' : ''}`}
+                onClick={() => toggleTag(c.id)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <span className="ar-field-label">Варианты количества (необязательно, например 11 шт / 25 шт / 31 шт)</span>
+        <div className="ar-variants">
+          {(draft.variants ?? []).map((v, i) => (
+            <div className="ar-variant-row" key={i}>
+              <input
+                className="cart-input"
+                placeholder="Например: 11 шт"
+                value={v.label}
+                onChange={(e) => updateVariant(i, { label: e.target.value })}
+              />
+              <input
+                className="cart-input ar-price"
+                type="number"
+                placeholder="Цена"
+                value={v.price || ''}
+                onChange={(e) => updateVariant(i, { price: parseInt(e.target.value, 10) || 0 })}
+              />
+              <label>
+                <input
+                  type="checkbox"
+                  checked={v.available}
+                  onChange={(e) => updateVariant(i, { available: e.target.checked })}
+                />
+                в наличии
+              </label>
+              <button type="button" className="ar-remove" onClick={() => removeVariant(i)}>
+                Удалить
+              </button>
+            </div>
+          ))}
+          <button type="button" className="ar-variant-add" onClick={addVariant}>
+            + Добавить вариант
+          </button>
+        </div>
+
         <label className="ar-avail">
           <input
             type="checkbox"
@@ -242,6 +423,7 @@ function ProductRow({
 export default function AdminDashboard() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [newRows, setNewRows] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'bouquet' | 'gift' | 'addon' | 'included'>('all');
@@ -249,9 +431,14 @@ export default function AdminDashboard() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch('/api/products', { cache: 'no-store' });
-    const data = await res.json();
-    setProducts(data.products || []);
+    const [productsRes, categoriesRes] = await Promise.all([
+      fetch('/api/products', { cache: 'no-store' }),
+      fetch('/api/categories', { cache: 'no-store' }),
+    ]);
+    const productsData = await productsRes.json();
+    const categoriesData = await categoriesRes.json();
+    setProducts(productsData.products || []);
+    setCategories(categoriesData.categories || []);
     setLoading(false);
   }, []);
 
@@ -325,12 +512,15 @@ export default function AdminDashboard() {
         </button>
       </div>
 
+      <CategoriesPanel categories={categories} onChange={setCategories} />
+
       {loading && <p>Загрузка…</p>}
 
       {newRows.map((p, i) => (
         <ProductRow
           key={`new-${i}`}
           product={p}
+          categories={categories}
           isNew
           onSaved={(saved) => {
             setNewRows((rows) => rows.filter((_, idx) => idx !== i));
@@ -344,6 +534,7 @@ export default function AdminDashboard() {
         <ProductRow
           key={p.id}
           product={p}
+          categories={categories}
           onSaved={(saved) => setProducts((prev) => prev.map((x) => (x.id === saved.id ? saved : x)))}
           onDeleted={(id) => setProducts((prev) => prev.filter((x) => x.id !== id))}
         />
