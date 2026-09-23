@@ -5,26 +5,29 @@ import { useState } from 'react';
 import { Product, formatPrice } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
 
-const SIZE_CHIPS = [
-  { label: 'Стандарт', mult: 1 },
-  { label: '1.5х', mult: 1.5 },
-  { label: '2х', mult: 2 },
-  { label: '3х', mult: 3 },
-];
+// A short, honest read of the photo's exact composition ("На фото 25 роз")
+// — only shown when the description names a concrete count, never guessed.
+function photoCaption(p: Pick<Product, 'name' | 'description'>): string | null {
+  const line = (p.description || '').split('\n')[0]?.trim();
+  if (!line) return null;
+  const m = line.match(/(\d+)\s*(стебл|ветк|шт)/i);
+  if (!m) return null;
+  const count = m[1];
+  const isRoseLine = /роз/i.test(line);
+  return isRoseLine ? `На фото ${count} роз` : `На фото ${count} шт`;
+}
 
 export default function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
   const { addToCart, favorites, toggleFavorite } = useCart();
-  const [mult, setMult] = useState(1);
   const [added, setAdded] = useState(false);
   const isFav = favorites.has(product.id);
-  const isBouquet = product.category === 'bouquet';
-  const displayPrice = Math.round(product.price * mult);
+  const caption = photoCaption(product);
 
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    const sizeLabel = isBouquet ? SIZE_CHIPS.find((c) => c.mult === mult)?.label ?? 'Стандарт' : 'Стандарт';
-    addToCart({ id: product.id, name: product.name, price: displayPrice, sizeLabel, qty: 1, image: product.image });
+    if (!product.available) return;
+    addToCart({ id: product.id, name: product.name, price: product.price, sizeLabel: 'Стандарт', qty: 1, image: product.image });
     setAdded(true);
     setTimeout(() => setAdded(false), 700);
   }
@@ -47,6 +50,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
           </svg>
         </button>
         {product.tag && <span className="card-tag">{product.tag}</span>}
+        {!product.available && <span className="card-tag card-tag-unavailable">Нет в наличии</span>}
         {product.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -65,32 +69,16 @@ export default function ProductCard({ product, priority = false }: { product: Pr
         )}
       </div>
       <div className="card-body">
+        {caption && <span className="card-caption">{caption}</span>}
         <h3>{product.name}</h3>
-        {isBouquet && (
-          <div className="size-chips">
-            {SIZE_CHIPS.map((c) => (
-              <button
-                key={c.label}
-                type="button"
-                className={`size-chip ${mult === c.mult ? 'is-active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setMult(c.mult);
-                }}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-        )}
         <div className="card-foot">
-          <span className="price">{formatPrice(displayPrice)}</span>
-          <button className={`order-btn ${added ? 'is-added' : ''}`} type="button" aria-label="В корзину" onClick={handleAdd}>
-            <svg className="icon" style={{ stroke: '#fff8f6', width: 16, height: 16 }} viewBox="0 0 24 24">
-              <path d="M6 6h15l-1.5 9h-12z" />
-              <path d="M6 6L4.5 3H2" />
-            </svg>
+          <button
+            className={`card-buy-btn ${added ? 'is-added' : ''}`}
+            type="button"
+            disabled={!product.available}
+            onClick={handleAdd}
+          >
+            {!product.available ? 'Нет в наличии' : added ? 'Добавлено' : `В корзину · ${formatPrice(product.price)}`}
           </button>
         </div>
       </div>
