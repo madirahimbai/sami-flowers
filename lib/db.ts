@@ -1,5 +1,16 @@
 import { Pool } from 'pg';
 
+/** A selectable quantity/size option with its own real price — e.g. roses
+ * "11 шт" / "25 шт" / "51 шт", each priced separately rather than derived
+ * by multiplying a base price. Empty on a product means "no variants set
+ * up yet", in which case the storefront just sells the product at its own
+ * `price`, unchanged. */
+export type ProductVariant = { label: string; price: number; available: boolean };
+
+/** Admin-managed catalog tab (e.g. "Розы", "Цветы в коробках"). A product
+ * can carry any number of these in `category_tags`. */
+export type Category = { id: string; label: string; sort_order: number };
+
 export type Product = {
   id: string;
   name: string;
@@ -9,6 +20,8 @@ export type Product = {
   image: string | null; // data: URI (base64) — stored directly in the row
   images: string[]; // up to 5 data: URIs — first one mirrors `image` as the cover photo
   category: 'bouquet' | 'gift' | 'addon' | 'included';
+  category_tags: string[]; // ids into the `categories` table — admin-assigned catalog tabs
+  variants: ProductVariant[];
   tag: string | null;
   available: boolean;
   sort_order: number;
@@ -86,6 +99,25 @@ export function ensureSchema(): Promise<void> {
           )
         `)
       )
+      .then(() =>
+        pool().query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS category_tags JSONB NOT NULL DEFAULT '[]'::jsonb`)
+      )
+      .then(() =>
+        pool().query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS variants JSONB NOT NULL DEFAULT '[]'::jsonb`)
+      )
+      .then(() =>
+        // Admin-managed catalog tabs (Розы, Кустовые розы, ...) — products
+        // reference these by id in `category_tags` rather than the storefront
+        // guessing categories from description text.
+        pool().query(`
+          CREATE TABLE IF NOT EXISTS categories (
+            id TEXT PRIMARY KEY,
+            label TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+          )
+        `)
+      )
       .then(() => undefined);
   }
   return schemaReady;
@@ -124,7 +156,8 @@ export async function setMonitorState(name: MonitorCheckName, ok: boolean, detai
 // `/api/products/{id}/image` URL, which an <img> tag treats exactly like a
 // data: URI — same rendering, but the bytes ship as a separate, cacheable,
 // actually-lazy-loadable request instead of bloating the initial HTML.
-const LIST_COLUMNS = 'id, name, number, price, description, (image IS NOT NULL) as has_image, category, tag, available, sort_order, order_count';
+const LIST_COLUMNS =
+  'id, name, number, price, description, (image IS NOT NULL) as has_image, category, category_tags, variants, tag, available, sort_order, order_count';
 
 type ListRow = {
   id: string;
@@ -134,6 +167,8 @@ type ListRow = {
   description: string | null;
   has_image: boolean;
   category: Product['category'];
+  category_tags: string[];
+  variants: ProductVariant[];
   tag: string | null;
   available: boolean;
   sort_order: number;
@@ -154,6 +189,8 @@ export async function listProducts(category?: 'bouquet' | 'gift' | 'addon' | 'in
     image: r.has_image ? `/api/products/${r.id}/image` : null,
     images: [],
     category: r.category,
+    category_tags: r.category_tags ?? [],
+    variants: r.variants ?? [],
     tag: r.tag,
     available: r.available,
     sort_order: r.sort_order,
@@ -186,18 +223,24 @@ export async function upsertProduct(p: {
   image: string | null;
   images?: string[] | null;
   category: 'bouquet' | 'gift' | 'addon' | 'included';
+  category_tags?: string[] | null;
+  variants?: ProductVariant[] | null;
   tag: string | null;
   available: boolean;
   sort_order?: number;
 }): Promise<Product> {
   await ensureSchema();
-  // `undefined` (the seed script's case) means "leave photos alone" — only an
-  // explicitly-passed array (even []) overwrites, so re-running the seed
-  // can't wipe out photos an admin has since uploaded through the dashboard.
+  // `undefined` (the seed script's case) means "leave alone" for each of
+  // these — only an explicitly-passed value (even [], for a category or
+  // variant list the admin cleared out) overwrites, so re-running the seed
+  // or an integration that doesn't know about these fields can't wipe out
+  // an admin's photos/tags/variants.
   const hasImages = p.images !== undefined && p.images !== null;
+  const hasCategoryTags = p.category_tags !== undefined && p.category_tags !== null;
+  const hasVariants = p.variants !== undefined && p.variants !== null;
   const result = await pool().query<Product>(
-    `INSERT INTO products (id, name, number, price, description, image, images, category, tag, available, sort_order)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    `INSERT INTO products (id, name, number, price, description, image, images, category, category_tags, variants, tag, available, sort_order)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      ON CONFLICT (id) DO UPDATE SET
        name = EXCLUDED.name,
        number = EXCLUDED.number,
@@ -206,10 +249,26 @@ export async function upsertProduct(p: {
        image = COALESCE(EXCLUDED.image, products.image),
        images = ${hasImages ? 'EXCLUDED.images' : 'products.images'},
        category = EXCLUDED.category,
+       category_tags = ${hasCategoryTags ? 'EXCLUDED.category_tags' : 'products.category_tags'},
+       variants = ${hasVariants ? 'EXCLUDED.variants' : 'products.variants'},
        tag = EXCLUDED.tag,
        available = EXCLUDED.available
      RETURNING *`,
-    [p.id, p.name, p.number, p.price, p.description, p.image, JSON.stringify(p.images ?? []), p.category, p.tag, p.available, p.sort_order ?? 0]
+    [
+      p.id,
+      p.name,
+      p.number,
+      p.price,
+      p.description,
+      p.image,
+      JSON.stringify(p.images ?? []),
+      p.category,
+      JSON.stringify(p.category_tags ?? []),
+      JSON.stringify(p.variants ?? []),
+      p.tag,
+      p.available,
+      p.sort_order ?? 0,
+    ]
   );
   return result.rows[0];
 }
@@ -260,4 +319,43 @@ export async function countProducts(): Promise<number> {
   await ensureSchema();
   const result = await pool().query<{ count: string }>('SELECT COUNT(*)::text as count FROM products');
   return parseInt(result.rows[0]?.count ?? '0', 10);
+}
+
+/** Validates/coerces whatever an API request body sent as `variants` into a
+ * clean ProductVariant[], dropping malformed rows instead of throwing —
+ * called from the product API routes before handing the value to
+ * upsertProduct. */
+export function sanitizeVariants(input: unknown): ProductVariant[] {
+  if (!Array.isArray(input)) return [];
+  const out: ProductVariant[] = [];
+  for (const raw of input) {
+    if (!raw || typeof raw !== 'object') continue;
+    const label = String((raw as any).label ?? '').trim();
+    const price = Number((raw as any).price);
+    if (!label || !Number.isFinite(price) || price < 0) continue;
+    out.push({ label, price: Math.round(price), available: (raw as any).available !== false });
+  }
+  return out;
+}
+
+export async function listCategories(): Promise<Category[]> {
+  await ensureSchema();
+  const result = await pool().query<Category>('SELECT * FROM categories ORDER BY sort_order ASC, label ASC');
+  return result.rows;
+}
+
+export async function upsertCategory(c: { id: string; label: string; sort_order?: number }): Promise<Category> {
+  await ensureSchema();
+  const result = await pool().query<Category>(
+    `INSERT INTO categories (id, label, sort_order) VALUES ($1, $2, $3)
+     ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, sort_order = EXCLUDED.sort_order
+     RETURNING *`,
+    [c.id, c.label, c.sort_order ?? 0]
+  );
+  return result.rows[0];
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  await ensureSchema();
+  await pool().query('DELETE FROM categories WHERE id = $1', [id]);
 }
