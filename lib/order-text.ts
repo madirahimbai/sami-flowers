@@ -1,4 +1,4 @@
-export type OrderItem = { id: string; name: string; sizeLabel: string; qty: number; price: number; image?: string | null };
+export type OrderItem = { id: string; name: string; number?: number | null; sizeLabel: string; qty: number; price: number; image?: string | null };
 
 export type OrderBody = {
   recipientType?: string;
@@ -31,7 +31,7 @@ export function buildOrderText(body: OrderBody, items: OrderItem[], paymentNote?
 
   const lines: string[] = ['Заказ с сайта Sami Flowers:', ''];
   for (const item of items) {
-    lines.push(`• ${item.name} (${item.sizeLabel}) x${item.qty} — ${formatPrice(item.price * item.qty)}`);
+    lines.push(`• ${item.name}${item.number ? ` [арт. ${item.number}]` : ''} (${item.sizeLabel}) x${item.qty} — ${formatPrice(item.price * item.qty)}`);
   }
   lines.push('', `Товары: ${formatPrice(itemsTotal)}`);
   if (deliveryFee > 0) lines.push(`Доставка (${body.deliveryZone || 'уточнить'}): ${formatPrice(deliveryFee)}`);
