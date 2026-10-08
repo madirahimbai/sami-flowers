@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import Breadcrumbs, { breadcrumbSchema } from '@/components/Breadcrumbs';
-import { PICKUP_LOCATIONS, KASPI_LINK, DELIVERY_ZONES, WORKING_HOURS, formatPhone } from '@/lib/delivery';
+import { PICKUP_LOCATIONS, DELIVERY_ZONES, WORKING_HOURS, formatPhone } from '@/lib/delivery';
 
 const SITE_URL = 'https://www.samiflowers.kz';
 const DESCRIPTION =
-  'Быстрая доставка цветов по Павлодару в течение 60 минут: районы и стоимость, самовывоз с Торайгырова и Амангельды, оплата Kaspi Gold и картой через PayPal.';
+  'Быстрая доставка цветов по Павлодару в течение 60 минут: районы и стоимость, самовывоз с Торайгырова и Амангельды, оплата Kaspi Gold, переводом или наличными.';
 
 export const metadata: Metadata = {
   title: 'Доставка и оплата цветов в Павлодаре',
@@ -83,25 +83,16 @@ export default function DeliveryPage() {
         ))}
       </div>
 
-      <h2>Способы оплаты</h2>
-      <ul>
-        <li>
-          <strong>Kaspi Gold</strong> — оплата по ссылке{' '}
-          <a href={KASPI_LINK} target="_blank" rel="noreferrer">
-            pay.kaspi.kz
-          </a>
-          .
-        </li>
-        <li>
-          <strong>PayPal</strong> — оплата картой на сайте, сумма списывается в долларах по текущему курсу.
-        </li>
-        <li>Наличными или переводом курьеру при получении — способ уточняем в переписке.</li>
-      </ul>
+      <h2>Оплата</h2>
+      <p>
+        Способ оплаты согласуем в WhatsApp при подтверждении заказа — Kaspi Gold, перевод или наличными курьеру
+        при получении.
+      </p>
 
       <h2>Как оформить заказ</h2>
       <p>
         Выберите букет в <a href="/#catalog">каталоге</a> или среди <a href="/roses">роз</a>, добавьте его в
-        корзину, укажите способ получения и контакты. Дальше заказ подтверждается в WhatsApp — там же можно
+        корзину, укажите способ получения и контакты. После этого откроется WhatsApp, где заказ подтверждается — там же можно
         уточнить состав, заменить цветы по сезону или обсудить открытку к букету.
       </p>
     </main>
