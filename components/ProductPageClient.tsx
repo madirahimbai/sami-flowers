@@ -122,6 +122,7 @@ export default function ProductPageClient({
     addToCart({
       id: product.id,
       name: product.name,
+      number: product.number,
       price: unitPrice,
       sizeLabel,
       qty,
