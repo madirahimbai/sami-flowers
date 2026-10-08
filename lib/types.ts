@@ -10,6 +10,7 @@ export type CartItem = {
   name: string;
   price: number;
   sizeLabel: string;
+  number?: number | null;
   qty: number;
   image?: string | null;
 };
