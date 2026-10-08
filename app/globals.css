@@ -373,6 +373,7 @@
   .card-fav.is-fav .icon{fill:var(--accent);stroke:var(--accent);}
   .card-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1;}
   .card-caption{font-size:11.5px;color:var(--text-muted);font-weight:600;}
+  .card-article{font-size:11.5px;color:var(--text-muted);font-weight:600;letter-spacing:.02em;margin-top:-2px;}
   .card-body h3{
     font-size:15px;font-family:"Fraunces",serif;font-weight:560;line-height:1.32;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
