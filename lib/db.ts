@@ -310,6 +310,15 @@ export async function updateProductNaming(id: string, name: string, number: numb
   await pool().query('UPDATE products SET name = $1, number = $2 WHERE id = $3', [name, number, id]);
 }
 
+/** Flips just the in-stock flag — used by the manager availability page so a
+ * toggle doesn't have to load and rewrite the product's photos. Returns false
+ * when no such product exists. */
+export async function setProductAvailability(id: string, available: boolean): Promise<boolean> {
+  await ensureSchema();
+  const result = await pool().query('UPDATE products SET available = $1 WHERE id = $2', [available, id]);
+  return (result.rowCount ?? 0) > 0;
+}
+
 export async function deleteProduct(id: string): Promise<void> {
   await ensureSchema();
   await pool().query('DELETE FROM products WHERE id = $1', [id]);
