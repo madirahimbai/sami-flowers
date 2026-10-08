@@ -34,6 +34,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
     addToCart({
       id: product.id,
       name: product.name,
+      number: product.number,
       price,
       sizeLabel: variant ? variant.label : 'Стандарт',
       qty: 1,
@@ -88,6 +89,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
       <div className="card-body">
         {caption && <span className="card-caption">{caption}</span>}
         <h3>{product.name}</h3>
+        {product.number !== null && <span className="card-article">Артикул {product.number}</span>}
         {availableVariants.length > 0 && (
           <div className="card-variants">
             {availableVariants.map((v) => (
