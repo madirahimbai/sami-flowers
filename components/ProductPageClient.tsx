@@ -363,8 +363,8 @@ export default function ProductPageClient({
               <details className="pp-acc">
                 <summary>Оплата</summary>
                 <div>
-                  Kaspi Gold по ссылке, картой через PayPal (списывается в долларах по курсу) или наличными
-                  курьеру при получении — выбирается при оформлении заказа.
+                  Способ оплаты согласуем в WhatsApp при подтверждении заказа — Kaspi Gold, перевод или наличными
+                  курьеру при получении.
                 </div>
               </details>
               <details className="pp-acc">
