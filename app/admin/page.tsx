@@ -23,7 +23,8 @@ export default function AdminLoginPage() {
         setError('Неверный пароль');
         return;
       }
-      router.push('/admin/dashboard');
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.push(next === '/admin/availability' ? next : '/admin/dashboard');
       router.refresh();
     } catch {
       setError('Ошибка сети, попробуйте ещё раз');
