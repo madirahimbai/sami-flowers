@@ -22,17 +22,6 @@ export default function CartDrawer() {
   const [deliveryTime, setDeliveryTime] = useState('');
   const [cardMessage, setCardMessage] = useState('');
   const [comment, setComment] = useState('');
-  const [formError, setFormError] = useState('');
-
-  function validateContact(): boolean {
-    const phoneDigits = orderPhone.replace(/\D/g, '');
-    if (!orderName.trim() || phoneDigits.length < 10) {
-      setFormError('Укажите имя и телефон — без них мы не сможем связаться и подтвердить заказ');
-      return false;
-    }
-    setFormError('');
-    return true;
-  }
 
   const deliveryFee = deliveryMethod === 'courier' ? DELIVERY_ZONES[zoneIdx].price : 0;
   const grandTotal = total + deliveryFee;
@@ -67,7 +56,6 @@ export default function CartDrawer() {
   // the request finish even after the tab loses focus to WhatsApp.
   function checkout(branchIdx: number) {
     if (cart.length === 0) return;
-    if (!validateContact()) return;
     const payload = buildPayload(branchIdx);
     const text = buildOrderText(payload, cart);
     openWhatsAppWith(text, PICKUP_LOCATIONS[branchIdx].phone);
@@ -170,25 +158,22 @@ export default function CartDrawer() {
                 </div>
               )}
 
-              <span className="field-label">Ваши контакты — как к вам обращаться и куда позвонить *</span>
+              <span className="field-label">Ваши контакты (необязательно — можно уточнить в WhatsApp)</span>
               <div className="field-row">
                 <input
-                  className={`cart-input ${formError && !orderName.trim() ? 'has-error' : ''}`}
+                  className="cart-input"
                   value={orderName}
                   onChange={(e) => setOrderName(e.target.value)}
                   placeholder="Ваше имя"
-                  required
                 />
                 <input
-                  className={`cart-input ${formError && orderPhone.replace(/\D/g, '').length < 10 ? 'has-error' : ''}`}
+                  className="cart-input"
                   value={orderPhone}
                   onChange={(e) => setOrderPhone(e.target.value)}
                   placeholder="Ваш телефон"
                   type="tel"
-                  required
                 />
               </div>
-              <div className="cart-error-slot">{formError && <p className="cart-error">{formError}</p>}</div>
 
               <span className="field-label">Способ получения</span>
               <div className="delivery-toggle">
