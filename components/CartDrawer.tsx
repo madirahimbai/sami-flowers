@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useCart } from '@/lib/cart-context';
 import { formatPrice } from '@/lib/types';
-import { PICKUP_LOCATIONS, KASPI_LINK, DELIVERY_ZONES, DELIVERY_TIME_SLOTS } from '@/lib/delivery';
+import { buildOrderText } from '@/lib/order-text';
+import { PICKUP_LOCATIONS, DELIVERY_ZONES, DELIVERY_TIME_SLOTS } from '@/lib/delivery';
 
 export default function CartDrawer() {
   const { cart, removeFromCart, total, isCartOpen, closeCart, clearCart } = useCart();
@@ -21,10 +22,7 @@ export default function CartDrawer() {
   const [deliveryTime, setDeliveryTime] = useState('');
   const [cardMessage, setCardMessage] = useState('');
   const [comment, setComment] = useState('');
-  const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState('');
-  const [showPaypal, setShowPaypal] = useState(false);
-  const paypalRef = useRef<HTMLDivElement>(null);
 
   function validateContact(): boolean {
     const phoneDigits = orderPhone.replace(/\D/g, '');
@@ -63,106 +61,24 @@ export default function CartDrawer() {
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   }
 
-  // The PayPal button below is mounted once and stays on screen while the
-  // customer can still edit the form — read through this ref (refreshed
-  // every render) so createOrder/onApprove always see the latest total and
-  // form fields instead of whatever was current when the button first
-  // rendered.
-  const latestRef = useRef({ grandTotal, buildPayload, openWhatsAppWith, pickupIdx });
-  latestRef.current = { grandTotal, buildPayload, openWhatsAppWith, pickupIdx };
-
-  async function checkout(branchIdx: number) {
+  // WhatsApp opens synchronously inside the click (browsers block pop-ups
+  // opened after an await, and the button would sit "frozen" waiting on the
+  // server). The order itself is recorded in the background — keepalive lets
+  // the request finish even after the tab loses focus to WhatsApp.
+  function checkout(branchIdx: number) {
     if (cart.length === 0) return;
     if (!validateContact()) return;
-    setSending(true);
-    let waText = '';
-    try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildPayload(branchIdx)),
-      });
-      const data = await res.json();
-      waText = data.message || '';
-    } catch {
-      // fall through — still let the customer reach WhatsApp even if our
-      // own Telegram-notify call failed
-    }
-    setSending(false);
-    if (waText) openWhatsAppWith(waText, PICKUP_LOCATIONS[branchIdx].phone);
+    const payload = buildPayload(branchIdx);
+    const text = buildOrderText(payload, cart);
+    openWhatsAppWith(text, PICKUP_LOCATIONS[branchIdx].phone);
+    fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {});
     clearCart();
     closeCart();
-  }
-
-  // Loads the PayPal JS SDK (once) and renders the official PayPal button
-  // only after the customer opts in — keeps it off the initial page load.
-  useEffect(() => {
-    if (!showPaypal || !paypalRef.current) return;
-    const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
-    if (!clientId) {
-      setFormError('Оплата PayPal ещё не настроена — выберите другой способ.');
-      setShowPaypal(false);
-      return;
-    }
-
-    function renderButtons() {
-      const container = paypalRef.current;
-      const paypal = (window as any).paypal;
-      if (!container || !paypal) return;
-      container.replaceChildren(); // clear any previously-rendered button, no markup involved
-      paypal
-        .Buttons({
-          style: { layout: 'horizontal', height: 40 },
-          createOrder: async () => {
-            const res = await fetch('/api/paypal/create-order', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ totalKzt: latestRef.current.grandTotal }),
-            });
-            const data = await res.json();
-            if (!data.orderId) throw new Error('create_order_failed');
-            return data.orderId;
-          },
-          onApprove: async (data: { orderID: string }) => {
-            setSending(true);
-            try {
-              const branchIdx = latestRef.current.pickupIdx;
-              const res = await fetch('/api/paypal/capture-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId: data.orderID, ...latestRef.current.buildPayload(branchIdx) }),
-              });
-              const result = await res.json();
-              if (result.ok) {
-                latestRef.current.openWhatsAppWith(result.message, PICKUP_LOCATIONS[branchIdx].phone);
-                clearCart();
-                closeCart();
-              } else {
-                setFormError('Оплата не прошла. Попробуйте ещё раз или выберите другой способ.');
-              }
-            } finally {
-              setSending(false);
-            }
-          },
-          onError: () => setFormError('Ошибка PayPal — попробуйте ещё раз или выберите другой способ.'),
-        })
-        .render(container);
-    }
-
-    if ((window as any).paypal) {
-      renderButtons();
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD`;
-    script.onload = renderButtons;
-    document.body.appendChild(script);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showPaypal]);
-
-  function togglePaypal() {
-    if (!showPaypal && !validateContact()) return;
-    setShowPaypal((v) => !v);
   }
 
   if (!isCartOpen) return null;
@@ -292,7 +208,7 @@ export default function CartDrawer() {
                 </button>
               </div>
               <span className="field-label">
-                {deliveryMethod === 'self' ? 'Пункт самовывоза' : 'Филиал (для Kaspi/PayPal — куда написать после оплаты)'}
+                {deliveryMethod === 'self' ? 'Пункт самовывоза' : 'Филиал (в какой WhatsApp написать)'}
               </span>
               <select
                 className="cart-input"
@@ -365,29 +281,7 @@ export default function CartDrawer() {
                 placeholder="Любые пожелания (необязательно)"
               />
 
-              <span className="field-label">Способ оплаты</span>
-              <div className="pay-methods">
-                <a className="pay-method" href={KASPI_LINK} target="_blank" rel="noreferrer">
-                  <svg className="icon" viewBox="0 0 24 24">
-                    <rect x="2" y="5" width="20" height="14" rx="3" />
-                    <path d="M2 10h20" />
-                  </svg>
-                  Kaspi Gold
-                </a>
-                <button type="button" className={`pay-method ${showPaypal ? 'is-active' : ''}`} onClick={togglePaypal}>
-                  <svg className="icon" viewBox="0 0 24 24">
-                    <path d="M6 4h10a5 5 0 010 10H10l-1.5 6H4z" />
-                  </svg>
-                  PayPal
-                </button>
-              </div>
-              <p className="pp-demo-note" style={{ fontSize: 12, marginTop: 6 }}>
-                Kaspi: оплатите по ссылке, затем напишите в WhatsApp одной из кнопок ниже. PayPal: оплата картой сразу
-                здесь (списывается в долларах по курсу).
-              </p>
-              {showPaypal && <div ref={paypalRef} style={{ marginTop: 10, minHeight: 44 }} />}
-
-              <span className="field-label">Оформить заказ в WhatsApp — выберите филиал</span>
+              <span className="field-label">Выберите филиал — заказ откроется в WhatsApp, оплату обсудим там</span>
               <div className="wa-branch-list">
                 {PICKUP_LOCATIONS.map((p, i) => (
                   <button
@@ -395,10 +289,9 @@ export default function CartDrawer() {
                     className="btn btn-primary wa-branch-btn"
                     type="button"
                     onClick={() => checkout(i)}
-                    disabled={sending}
                   >
-                    <span className="wb-name">{sending ? 'Отправляем…' : p.label}</span>
-                    {!sending && <span className="wb-total">{formatPrice(grandTotal)}</span>}
+                    <span className="wb-name">{p.label}</span>
+                    <span className="wb-total">{formatPrice(grandTotal)}</span>
                   </button>
                 ))}
               </div>
