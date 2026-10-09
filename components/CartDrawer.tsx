@@ -62,19 +62,33 @@ export default function CartDrawer() {
 
   // WhatsApp opens synchronously inside the click (browsers block pop-ups
   // opened after an await, and the button would sit "frozen" waiting on the
-  // server). The order itself is recorded in the background — keepalive lets
-  // the request finish even after the tab loses focus to WhatsApp.
+  // server). The order is handed to the browser with sendBeacon first —
+  // unlike a plain fetch it is guaranteed to be sent even when the page is
+  // backgrounded the moment the WhatsApp app takes over; keepalive fetch is
+  // only the fallback. clientId makes any repeated send a no-op server-side.
   function checkout(branchIdx: number) {
     if (cart.length === 0) return;
-    const payload = buildPayload(branchIdx);
-    const text = buildOrderText(payload, cart);
-    openWhatsAppWith(text, PICKUP_LOCATIONS[branchIdx].phone);
-    fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      keepalive: true,
-    }).catch(() => {});
+    const clientId =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const payload = { ...buildPayload(branchIdx), clientId };
+    const body = JSON.stringify(payload);
+    let queued = false;
+    try {
+      queued = navigator.sendBeacon('/api/orders', new Blob([body], { type: 'application/json' }));
+    } catch {
+      queued = false;
+    }
+    if (!queued) {
+      fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    }
+    openWhatsAppWith(buildOrderText(payload, cart), PICKUP_LOCATIONS[branchIdx].phone);
     clearCart();
     closeCart();
   }
