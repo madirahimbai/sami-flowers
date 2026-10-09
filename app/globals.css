@@ -572,7 +572,7 @@
   .sheet-overlay.open{opacity:1;pointer-events:auto;}
   @media (min-width:760px){.sheet-overlay{align-items:center;padding:24px;}}
   .sheet{
-    background:var(--surface);width:100%;max-width:600px;max-height:92vh;overflow-y:auto;
+    background:var(--surface);width:100%;max-width:600px;max-height:92vh;max-height:92dvh;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
     border-radius:26px 26px 0 0;transform:translateY(30px);
     transition:transform .45s cubic-bezier(.22,.9,.32,1);position:relative;
   }
@@ -662,6 +662,14 @@
   .cart-error-slot{min-height:19px;margin-top:8px;}
   .cart-error{color:var(--accent-strong);font-size:12.5px;line-height:1.4;margin:0;}
   .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .field-row>*{min-width:0;}
+  .cart-input{min-width:0;}
+  input.cart-input[type="date"]{-webkit-appearance:none;appearance:none;min-height:42px;}
+  /* iOS Safari zooms the whole page when a focused field is under 16px and
+     never zooms back out — keep every cart/admin field at 16px on touch. */
+  @media (max-width:760px),(pointer:coarse){
+    .cart-input,.cart-address,.admin-row textarea.cart-input,.sort-select{font-size:16px;}
+  }
   @media (max-width:420px){.field-row{grid-template-columns:1fr;}}
   .currency-note{font-size:12px;color:var(--text-muted);margin-top:6px;}
 
