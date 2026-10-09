@@ -118,9 +118,87 @@ export function ensureSchema(): Promise<void> {
           )
         `)
       )
+      .then(() =>
+        // Every checkout is written here BEFORE the Telegram notification is
+        // attempted, so a Telegram/network hiccup can never lose an order —
+        // failed notifications are retried and visible in /admin/orders.
+        // client_id (generated in the browser) makes a repeated send of the
+        // same order a no-op instead of a duplicate.
+        pool().query(`
+          CREATE TABLE IF NOT EXISTS orders (
+            id SERIAL PRIMARY KEY,
+            client_id TEXT UNIQUE,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+            text TEXT NOT NULL,
+            photo TEXT,
+            total INTEGER NOT NULL DEFAULT 0,
+            telegram_ok BOOLEAN NOT NULL DEFAULT false,
+            telegram_error TEXT,
+            attempts INTEGER NOT NULL DEFAULT 0
+          )
+        `)
+      )
       .then(() => undefined);
   }
   return schemaReady;
+}
+
+export type OrderRow = {
+  id: number;
+  created_at: string;
+  text: string;
+  photo: string | null;
+  total: number;
+  telegram_ok: boolean;
+  telegram_error: string | null;
+  attempts: number;
+};
+
+/** Stores a new order; `duplicate` is true when this client_id was already saved. */
+export async function saveOrder(o: {
+  clientId: string | null;
+  text: string;
+  photo: string | null;
+  total: number;
+}): Promise<{ id: number; duplicate: boolean }> {
+  await ensureSchema();
+  const inserted = await pool().query<{ id: number }>(
+    `INSERT INTO orders (client_id, text, photo, total) VALUES ($1, $2, $3, $4)
+     ON CONFLICT (client_id) DO NOTHING RETURNING id`,
+    [o.clientId, o.text, o.photo, o.total]
+  );
+  if (inserted.rows[0]) return { id: inserted.rows[0].id, duplicate: false };
+  const existing = await pool().query<{ id: number }>('SELECT id FROM orders WHERE client_id = $1', [o.clientId]);
+  return { id: existing.rows[0].id, duplicate: true };
+}
+
+export async function markOrderNotified(id: number, ok: boolean, error: string | null): Promise<void> {
+  await ensureSchema();
+  await pool().query('UPDATE orders SET telegram_ok = $2, telegram_error = $3, attempts = attempts + 1 WHERE id = $1', [
+    id,
+    ok,
+    error,
+  ]);
+}
+
+export async function listRecentOrders(limit = 100): Promise<OrderRow[]> {
+  await ensureSchema();
+  const result = await pool().query<OrderRow>(
+    'SELECT id, created_at, text, photo, total, telegram_ok, telegram_error, attempts FROM orders ORDER BY id DESC LIMIT $1',
+    [limit]
+  );
+  return result.rows;
+}
+
+export async function listUnnotifiedOrders(sinceHours = 48, limit = 5): Promise<OrderRow[]> {
+  await ensureSchema();
+  const result = await pool().query<OrderRow>(
+    `SELECT id, created_at, text, photo, total, telegram_ok, telegram_error, attempts FROM orders
+     WHERE telegram_ok = false AND attempts < 10 AND created_at > now() - ($1 || ' hours')::interval
+     ORDER BY id ASC LIMIT $2`,
+    [String(sinceHours), limit]
+  );
+  return result.rows;
 }
 
 export type MonitorCheckName = 'site' | 'telegram_token' | 'telegram_delivery';
