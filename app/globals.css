@@ -982,3 +982,16 @@
 .av-switch:disabled{opacity:.6;cursor:wait;}
 .av-switch-knob{width:30px;height:30px;border-radius:50%;background:#fff;box-shadow:0 1px 4px hsla(0,0%,0%,.25);flex:none;transition:transform .2s ease;}
 .av-switch.is-on .av-switch-knob{background:var(--sage);}
+
+/* admin orders list (/admin/orders) */
+.od-row{padding:12px 0;border-bottom:1px solid var(--border);}
+.od-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.od-time{font-weight:700;font-size:14px;}
+.od-total{color:var(--accent-strong);font-family:"Fraunces",serif;font-size:15px;}
+.od-badge{margin-left:auto;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;}
+.od-badge.is-ok{background:var(--sage-soft);color:#5c6747;}
+.od-badge.is-fail{background:var(--accent-soft);color:var(--accent-strong);}
+.od-error{font-size:12px;color:var(--accent-strong);margin-top:4px;}
+.od-row details{margin-top:6px;font-size:13px;color:var(--text-muted);}
+.od-row summary{cursor:pointer;}
+.od-text{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;color:var(--text);margin:6px 0 0;}
