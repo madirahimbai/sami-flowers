@@ -3,7 +3,7 @@ import { verifySessionValue, ADMIN_COOKIE_NAME } from '@/lib/auth';
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  if (path.startsWith('/admin/dashboard') || path.startsWith('/admin/availability')) {
+  if (path.startsWith('/admin/dashboard') || path.startsWith('/admin/availability') || path.startsWith('/admin/orders')) {
     const value = req.cookies.get(ADMIN_COOKIE_NAME)?.value;
     if (!(await verifySessionValue(value))) {
       const loginUrl = new URL('/admin', req.url);
