@@ -688,8 +688,12 @@
   }
   .pp-back:hover{color:var(--accent-strong);}
   .pp-body{padding:28px 24px 60px;}
-  .pp-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:48px;align-items:flex-start;}
-  @media (max-width:860px){.pp-grid{grid-template-columns:1fr;gap:28px;}}
+  /* minmax(0,…) + min-width:0: without them a horizontally-scrolling strip
+     inside the info column (included items, add-ons) sets the column's
+     min-content width and the whole page grows wider than a phone screen. */
+  .pp-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:48px;align-items:flex-start;}
+  .pp-grid>*{min-width:0;}
+  @media (max-width:860px){.pp-grid{grid-template-columns:minmax(0,1fr);gap:28px;}}
 
   .pp-gallery{display:flex;gap:14px;position:sticky;top:76px;}
   @media (max-width:860px){.pp-gallery{position:static;flex-direction:column-reverse;}}
