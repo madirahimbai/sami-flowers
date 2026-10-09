@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMonitorState, setMonitorState, MonitorCheckName } from '@/lib/db';
+import { retryUnnotifiedOrders } from '@/lib/orders';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,5 +107,10 @@ export async function GET(req: NextRequest) {
     await setMonitorState(name, result.ok, result.detail);
   }
 
-  return NextResponse.json({ ok: true, checked_at: new Date().toISOString(), results });
+  // Orders whose Telegram notification failed earlier get re-sent here, so
+  // they arrive even when no new order comes in to trigger a retry.
+  let resent = 0;
+  if (results.telegram_delivery.ok) resent = await retryUnnotifiedOrders().catch(() => 0);
+
+  return NextResponse.json({ ok: true, checked_at: new Date().toISOString(), results, resent_orders: resent });
 }
