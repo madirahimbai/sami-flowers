@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCart } from '@/lib/cart-context';
 import { formatPrice } from '@/lib/types';
 import { buildOrderText } from '@/lib/order-text';
@@ -22,6 +22,16 @@ export default function CartDrawer() {
   const [deliveryTime, setDeliveryTime] = useState('');
   const [cardMessage, setCardMessage] = useState('');
   const [comment, setComment] = useState('');
+
+  // Freeze the page behind the open cart so it can't scroll or shift under it.
+  useEffect(() => {
+    if (!isCartOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isCartOpen]);
 
   const deliveryFee = deliveryMethod === 'courier' ? DELIVERY_ZONES[zoneIdx].price : 0;
   const grandTotal = total + deliveryFee;
