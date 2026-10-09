@@ -467,6 +467,7 @@ export default function AdminDashboard() {
       <div className="admin-dashboard-header">
         <h1>Sami Flowers — управление магазином</h1>
         <div>
+          <a href="/admin/orders">Заказы</a>
           <a href="/admin/availability">Наличие</a>
           <a href="/" target="_blank" rel="noreferrer">
             Открыть сайт
