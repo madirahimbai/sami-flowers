@@ -24,7 +24,7 @@ export default function AdminLoginPage() {
         return;
       }
       const next = new URLSearchParams(window.location.search).get('next');
-      router.push(next === '/admin/availability' ? next : '/admin/dashboard');
+      router.push(next === '/admin/availability' || next === '/admin/orders' ? next : '/admin/dashboard');
       router.refresh();
     } catch {
       setError('Ошибка сети, попробуйте ещё раз');
