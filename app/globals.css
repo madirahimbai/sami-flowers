@@ -701,8 +701,11 @@
   }
   .pp-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
   .pp-thumb.is-active{border-color:var(--accent);}
-  .pp-main{position:relative;flex:1;border-radius:24px;overflow:hidden;background:var(--surface-2);aspect-ratio:4/5;}
-  .pp-main-img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;}
+  /* Photos are portrait (9:16) — show them whole instead of cropping into a
+     fixed 4:5 frame; height is capped so the full photo fits on screen. */
+  .pp-main{position:relative;flex:1;min-width:0;border-radius:24px;overflow:hidden;background:var(--surface-2);display:flex;align-items:center;justify-content:center;}
+  .pp-main-img{width:100%;height:auto;max-height:85vh;max-height:85dvh;object-fit:contain;display:block;cursor:zoom-in;}
+  .pp-main>svg{aspect-ratio:4/5;height:auto!important;}
   .pp-arrow{
     position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;
     background:hsla(0,0%,100%,.88);border:1px solid var(--border);cursor:pointer;font-size:20px;line-height:1;
@@ -842,7 +845,7 @@
     opacity:0;pointer-events:none;transition:opacity .3s ease;
   }
   .lightbox.open{opacity:1;pointer-events:auto;}
-  .lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;}
+  .lightbox img{max-width:calc(100vw - 48px);max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);width:auto;height:auto;object-fit:contain;border-radius:8px;}
 
   /* ---------- ADMIN ---------- */
   .admin-link{background:none;border:none;color:var(--text-muted);font-size:11.5px;cursor:pointer;padding:0;text-decoration:underline;}
