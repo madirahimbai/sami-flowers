@@ -2,25 +2,31 @@ import { compressImage } from './image';
 
 const SITE_URL = 'https://www.samiflowers.kz';
 
-/** Sends the order to the shop's Telegram chat via the Bot API — with the
- * bouquet's photo attached when one is available, so staff see the order
- * text and the picture together instead of having to open the site.
- * Server-side only — the bot token never reaches the browser.
- * Silently no-ops if the env vars aren't configured, and never throws
- * (a Telegram hiccup must not block an order from reaching WhatsApp).
- *
- * `photo` can be either a data: URI (product detail page — real base64 from
- * the DB) or a `/api/products/{id}/image` path (catalog cards — the
- * lightweight listing only carries a URL, not the photo bytes). Telegram's
- * sendPhoto accepts a plain URL and fetches it itself, so the URL case
- * doesn't need decoding at all. */
-export async function notifyTelegram(text: string, photo?: string | null): Promise<void> {
+export type NotifyResult = { ok: boolean; error?: string };
+
+const TELEGRAM_TIMEOUT_MS = 12000;
+
+async function tgCall(token: string, method: string, init: RequestInit): Promise<NotifyResult> {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+      ...init,
+      signal: AbortSignal.timeout(TELEGRAM_TIMEOUT_MS),
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data?.ok) return { ok: true };
+    return { ok: false, error: data?.description || `HTTP ${res.status}` };
+  } catch (e: any) {
+    return { ok: false, error: e?.message || 'network_error' };
+  }
+}
+
+async function notifyOnce(text: string, photo: string | null | undefined): Promise<NotifyResult> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
+  if (!token || !chatId) return { ok: false, error: 'TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID не настроены' };
 
   const sendText = () =>
-    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    tgCall(token, 'sendMessage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text }),
@@ -31,38 +37,51 @@ export async function notifyTelegram(text: string, photo?: string | null): Promi
   const fitsCaption = text.length <= 1024;
   const caption = fitsCaption ? text : text.slice(0, 1000) + '…';
 
-  try {
-    const dataMatch = photo?.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
-    let res: Response;
+  const dataMatch = photo?.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  let sent: NotifyResult;
 
-    if (dataMatch) {
-      const [, mime, base64] = dataMatch;
-      const buf = Buffer.from(base64, 'base64');
-      const form = new FormData();
-      form.append('chat_id', chatId);
-      form.append('caption', caption);
-      form.append('photo', new Blob([buf], { type: mime }), 'order.jpg');
-      res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: form });
-    } else if (photo) {
-      const photoUrl = photo.startsWith('http') ? photo : `${SITE_URL}${photo}`;
-      res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, photo: photoUrl, caption }),
-      });
-    } else {
-      await sendText();
-      return;
-    }
-
-    if (!res.ok) {
-      await sendText();
-      return;
-    }
-    if (!fitsCaption) await sendText();
-  } catch {
-    // best-effort duplicate channel; failures here must not break checkout
+  if (dataMatch) {
+    const [, mime, base64] = dataMatch;
+    const form = new FormData();
+    form.append('chat_id', chatId);
+    form.append('caption', caption);
+    form.append('photo', new Blob([Buffer.from(base64, 'base64')], { type: mime }), 'order.jpg');
+    sent = await tgCall(token, 'sendPhoto', { method: 'POST', body: form });
+  } else if (photo) {
+    const photoUrl = photo.startsWith('http') ? photo : `${SITE_URL}${photo}`;
+    sent = await tgCall(token, 'sendPhoto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, photo: photoUrl, caption }),
+    });
+  } else {
+    return sendText();
   }
+
+  // Photo couldn't be delivered (bad image, Telegram can't fetch the URL) —
+  // the order text itself must still arrive.
+  if (!sent.ok) return sendText();
+  if (!fitsCaption) await sendText();
+  return sent;
+}
+
+/** Sends the order to the shop's Telegram chat — with the bouquet's photo
+ * when available. Retries up to 3 times (a single Telegram/network blip must
+ * not lose an order notification) and reports the outcome instead of hiding
+ * it, so the caller can record a failure and retry later. Never throws.
+ * Server-side only — the bot token never reaches the browser.
+ *
+ * `photo` can be a data: URI (product detail page) or a
+ * `/api/products/{id}/image` path (catalog cards) — Telegram fetches a URL
+ * itself, so that case needs no decoding. */
+export async function notifyTelegram(text: string, photo?: string | null): Promise<NotifyResult> {
+  let last: NotifyResult = { ok: false, error: 'not_attempted' };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    last = await notifyOnce(text, photo);
+    if (last.ok) return last;
+    if (attempt < 2) await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));
+  }
+  return last;
 }
 
 /** Plain text reply — used by the webhook to confirm/explain, not tied to
