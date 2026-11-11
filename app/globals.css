@@ -35,6 +35,7 @@
   }
   p{margin:0;}
   a{color:inherit;}
+  a.card,a.related-item{text-decoration:none;}
   ::selection{background:var(--accent-soft);color:var(--accent-strong);}
 
   .wrap{max-width:1180px;margin:0 auto;padding-inline:24px;}
